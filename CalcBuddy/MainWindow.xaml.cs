@@ -5,10 +5,13 @@ namespace CalcBuddy
 {
     public partial class MainWindow : Window
     {
+        readonly MathParser.MathParser mathParser;
+
         public MainWindow()
         {
             InitializeComponent();
             Loaded += MainWindow_Loaded;
+            mathParser = new MathParser.MathParser();
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
