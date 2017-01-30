@@ -28,10 +28,10 @@ namespace CalcBuddy
             ConsoleTextBox textBox = new ConsoleTextBox();
             host.Child = textBox;
 
-            grid.Children.Add(host);
+            ConsoleBorder.Child = host;
 
             string text = "";
-           
+
             do
             {
                 textBox.WriteLine("> ");
@@ -65,7 +65,27 @@ namespace CalcBuddy
 
             } while (text != "exit");
 
-            
+
+        }
+
+        private void CloseWindowClick(object sender, System.Windows.RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void TitleBarMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
+
+        private void MinimizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
+        {
+            WindowState = System.Windows.WindowState.Minimized;
+        }
+
+        private void MaximizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
+        {
+            WindowState = System.Windows.WindowState.Maximized;
         }
     }
 }

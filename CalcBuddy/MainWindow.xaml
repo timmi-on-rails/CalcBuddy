@@ -4,9 +4,91 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CalcBuddy"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid x:Name="grid">
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        MinWidth="200" MinHeight="100"
+        Title="CalcBuddy" Width="340" Height="480">
+    <!-- TODO maximize window fix border bug / old title color #D53736-->
+    <!-- Double click and drag maximized window -->
+    <Window.Resources>
+        <system:Double x:Key="TitleBarHeight">20</system:Double>
+        <SolidColorBrush x:Key="TitleBarBackground" Color="#FF2E58E6" />
+
+        <ControlTemplate x:Key="CloseButtonTemplate" TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+                <Path Data="M0,0 L8,8 M8,0 L0,8" VerticalAlignment="Center" HorizontalAlignment="Center" Stroke="LightGray" StrokeThickness="2" />
+            </Border>
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="Red" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="RestoreButtonTemplate" TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+                <Path VerticalAlignment="Center" HorizontalAlignment="Center" StrokeThickness="23" Fill="LightGray" >
+                    <Path.Data>
+                        <Geometry>
+                            M1,4.9996096 L1,7.000219 7,6.999219 7,5.001 2,5.001 2,4.9996096 z M3,2.0014141 L3,3.0000001 8,3.0000001 8,4.0000001 8,4.0008045 9,4.0008045 9,2.0014141 z M2,0 L10,0 10,0.0010234118 10,1.0000001 10,5.001 8,5.001 8,7.9990235 0,8.0000239 0,4.0000001 0,3.0009998 0,3.0000001 2,3.0000001 2,1.0000001 2,0.0010234118 z
+                        </Geometry>
+                    </Path.Data>
+                </Path>
+            </Border>
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="Gray" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+
+        <ControlTemplate x:Key="MaximizeButtonTemplate" TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+                <Path Data="M0,1 L9,1 L9,8 L0,8 Z"  VerticalAlignment="Center" HorizontalAlignment="Center" Stroke="LightGray" StrokeThickness="2" />
+            </Border>
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="Gray" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="MinimizeButtonTemplate" TargetType="Button">
+            <Border x:Name="bd" Background="Transparent">
+                <Path Data="M0,0 L8,0 8,1 8,2 0,2 0,1 z"  VerticalAlignment="Center" HorizontalAlignment="Center" Fill="LightGray" />
+            </Border>
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="Gray" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" CornerRadius="0" />
+    </WindowChrome.WindowChrome>
+
+    <DockPanel LastChildFill="True">
+        <Grid DockPanel.Dock="Top">
+            <Rectangle Fill="{StaticResource TitleBarBackground}" Height="{StaticResource TitleBarHeight}" MouseLeftButtonDown="TitleBarMouseLeftButtonDown" />
+
+            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" FontWeight="Bold" Foreground="#FFE0E0E0">CalcBuddy</TextBlock>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Click="MinimizeWindowClick" Focusable="False" Width="{StaticResource TitleBarHeight}" Height="{StaticResource TitleBarHeight}" Template="{StaticResource MinimizeButtonTemplate}" />
+                <Button Click="MaximizeWindowClick" Focusable="False" Width="{StaticResource TitleBarHeight}" Height="{StaticResource TitleBarHeight}" Template="{StaticResource MaximizeButtonTemplate}" />
+                <Button Click="CloseWindowClick" Focusable="False" Width="{StaticResource TitleBarHeight}" Height="{StaticResource TitleBarHeight}" Template="{StaticResource CloseButtonTemplate}" />
+            </StackPanel>
+        </Grid>
         
-    </Grid>
+        <Border x:Name="ConsoleBorder" Padding="5" Background="Transparent" BorderThickness="1,0,1,1" BorderBrush="{StaticResource TitleBarBackground}" />
+    </DockPanel>
 </Window>
