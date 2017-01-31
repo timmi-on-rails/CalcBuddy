@@ -8,6 +8,7 @@
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip" 
         MinWidth="200" MinHeight="100"
+        Icon="CalcBuddy.ico"
         Title="CalcBuddy" Width="340" Height="480">
 
     <Window.Resources>
@@ -107,6 +108,8 @@
         </Grid.RowDefinitions>
 
         <Rectangle Fill="{StaticResource TitleBarBackground}" Height="{StaticResource TitleBarHeight}" />
+
+        <Image HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0" Width="16" Height="16" Source="CalcBuddy.ico" />
 
         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#FFE0E0E0">CalcBuddy</TextBlock>
 

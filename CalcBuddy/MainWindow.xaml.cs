@@ -1,5 +1,7 @@
 ﻿using MathParser;
+using System;
 using System.Windows;
+using System.Windows.Input;
 
 namespace CalcBuddy
 {
@@ -16,9 +18,19 @@ namespace CalcBuddy
 
         readonly MathParser.MathParser mathParser;
         readonly SymbolManager symbolManager;
+        System.Windows.Forms.NotifyIcon notifyIcon;
+        HotKey _hotKey;
+        ConsoleTextBox textBox;
 
         public MainWindow()
         {
+            notifyIcon = new System.Windows.Forms.NotifyIcon();
+            notifyIcon.Icon = new System.Drawing.Icon("CalcBuddy.ico");
+
+            notifyIcon.DoubleClick += notifyIcon_DoubleClick;
+            Deactivated += MainWindow_Deactivated;
+            _hotKey = new HotKey(Key.C, KeyModifier.Win, OnHotKeyHandler);
+
             InitializeComponent();
             Loaded += MainWindow_Loaded;
             mathParser = new MathParser.MathParser();
@@ -26,14 +38,55 @@ namespace CalcBuddy
             symbolManager = new SymbolManager();
             symbolManager.SetTrigonometrySymbols();
             symbolManager.SetEvalSymbol();
+
+            Closing += MainWindow_Closing;
         }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            notifyIcon.Dispose();
+        }
+
+        private void OnHotKeyHandler(HotKey obj)
+        {
+            if (Visibility == Visibility.Visible)
+            {
+                Hide();
+                notifyIcon.Visible = true;
+            }
+            else
+            {
+                notifyIcon.Visible = false;
+                Show();
+                Activate();
+                textBox.Invalidate();
+                textBox.Focus();
+            }
+        }
+
+        void MainWindow_Deactivated(object sender, EventArgs e)
+        {
+            Hide();
+            notifyIcon.Visible = true;
+        }
+
+        void notifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false;
+            Show();
+            Activate();
+            textBox.Focus();
+
+
+        }
+
 
         private async void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             System.Windows.Forms.Integration.WindowsFormsHost host =
                 new System.Windows.Forms.Integration.WindowsFormsHost();
 
-            ConsoleTextBox textBox = new ConsoleTextBox();
+            textBox = new ConsoleTextBox();
             host.Child = textBox;
 
             ConsoleBorder.Child = host;
