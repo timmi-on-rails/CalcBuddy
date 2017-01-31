@@ -59,7 +59,7 @@ namespace CalcBuddy
                 notifyIcon.Visible = false;
                 Show();
                 Activate();
-                textBox.Invalidate();
+                host.InvalidateVisual();
                 textBox.Focus();
             }
         }
@@ -75,9 +75,8 @@ namespace CalcBuddy
             notifyIcon.Visible = false;
             Show();
             Activate();
+            host.InvalidateVisual();
             textBox.Focus();
-
-
         }
 
 
@@ -88,6 +87,7 @@ namespace CalcBuddy
             do
             {
                 textBox.WriteLine("> ");
+                textBox.Focus();
                 text = await textBox.ReadLineAsync();
                 try
                 {
@@ -128,6 +128,7 @@ namespace CalcBuddy
 
         private void MinimizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
         {
+            // TODO black window when restoring with click on task bar
             WindowState = WindowState.Minimized;
         }
 

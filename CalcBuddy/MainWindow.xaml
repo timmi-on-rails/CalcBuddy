@@ -134,8 +134,8 @@
         </StackPanel>
 
         <Border Grid.Row="1" x:Name="ConsoleBorder" Padding="{StaticResource ResizeBorderThickness}" Background="Transparent" BorderThickness="1,0,1,1" BorderBrush="{StaticResource TitleBarBackground}">
-            <forms:WindowsFormsHost>
-                <local:ConsoleTextBox x:Name="textBox" />
+            <forms:WindowsFormsHost x:Name="host">
+                <local:ConsoleTextBox x:Name="textBox" WordWrap="True" BracketsHighlightStrategy="Strategy2"/>
             </forms:WindowsFormsHost>
         </Border>
     </Grid>
