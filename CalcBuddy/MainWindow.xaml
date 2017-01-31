@@ -60,7 +60,10 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <SolidColorBrush x:Key="TitleBarBackground" Color="#FF2E58E6" />
+        <LinearGradientBrush x:Key="TitleBarBackground" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FF2E58E6" Offset="0" />
+            <GradientStop Color="#FF7A8CC5" Offset="1" />
+        </LinearGradientBrush>
 
         <system:Double x:Key="TitleBarHeight">20</system:Double>
 
