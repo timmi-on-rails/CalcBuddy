@@ -20,7 +20,7 @@ namespace CalcBuddy
         readonly SymbolManager symbolManager;
         System.Windows.Forms.NotifyIcon notifyIcon;
         HotKey _hotKey;
-        ConsoleTextBox textBox;
+
 
         public MainWindow()
         {
@@ -83,14 +83,6 @@ namespace CalcBuddy
 
         private async void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            System.Windows.Forms.Integration.WindowsFormsHost host =
-                new System.Windows.Forms.Integration.WindowsFormsHost();
-
-            textBox = new ConsoleTextBox();
-            host.Child = textBox;
-
-            ConsoleBorder.Child = host;
-
             string text = "";
 
             do

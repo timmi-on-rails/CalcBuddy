@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CalcBuddy"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:forms="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
         mc:Ignorable="d"
         ResizeMode="CanResizeWithGrip" 
         MinWidth="200" MinHeight="100"
         Icon="CalcBuddy.ico"
+        
         Title="CalcBuddy" Width="340" Height="480">
 
     <Window.Resources>
@@ -109,7 +111,7 @@
 
         <Rectangle Fill="{StaticResource TitleBarBackground}" Height="{StaticResource TitleBarHeight}" />
 
-        <Image HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0" Width="16" Height="16" Source="CalcBuddy.ico" />
+        <Image HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0" Width="16" Height="16" Source="CalcBuddy.ico" />
 
         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#FFE0E0E0">CalcBuddy</TextBlock>
 
@@ -131,6 +133,10 @@
             <Button Click="CloseWindowClick" Focusable="False" Width="{StaticResource TitleBarHeight}" Height="{StaticResource TitleBarHeight}" Template="{StaticResource CloseButtonTemplate}" />
         </StackPanel>
 
-        <Border Grid.Row="1" x:Name="ConsoleBorder" Padding="{StaticResource ResizeBorderThickness}" Background="Transparent" BorderThickness="1,0,1,1" BorderBrush="{StaticResource TitleBarBackground}" />
+        <Border Grid.Row="1" x:Name="ConsoleBorder" Padding="{StaticResource ResizeBorderThickness}" Background="Transparent" BorderThickness="1,0,1,1" BorderBrush="{StaticResource TitleBarBackground}">
+            <forms:WindowsFormsHost>
+                <local:ConsoleTextBox x:Name="textBox" />
+            </forms:WindowsFormsHost>
+        </Border>
     </Grid>
 </Window>
