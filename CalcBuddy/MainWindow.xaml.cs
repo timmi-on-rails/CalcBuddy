@@ -1,11 +1,19 @@
-﻿using FastColoredTextBoxNS;
-using MathParser;
-
+﻿using MathParser;
+using System.Windows;
 
 namespace CalcBuddy
 {
-    public partial class MainWindow : System.Windows.Window
+    public partial class MainWindow : Window
     {
+        public double WindowChromeCaptionHeight
+        {
+            get { return (double)GetValue(WindowChromeCaptionHeightProperty); }
+            set { SetValue(WindowChromeCaptionHeightProperty, value); }
+        }
+
+        public static readonly DependencyProperty WindowChromeCaptionHeightProperty =
+            DependencyProperty.Register("WindowChromeCaptionHeight", typeof(double), typeof(MainWindow));
+
         readonly MathParser.MathParser mathParser;
         readonly SymbolManager symbolManager;
 
@@ -38,7 +46,7 @@ namespace CalcBuddy
                 text = await textBox.ReadLineAsync();
                 try
                 {
-                    Expression expression = mathParser.Parse(text);
+                    MathParser.Expression expression = mathParser.Parse(text);
 
                     string detail = expression.ToDebug();
                     Value result = expression.Evaluate(symbolManager);
@@ -73,19 +81,21 @@ namespace CalcBuddy
             Close();
         }
 
-        private void TitleBarMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            DragMove();
-        }
-
         private void MinimizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
         {
-            WindowState = System.Windows.WindowState.Minimized;
+            WindowState = WindowState.Minimized;
         }
 
-        private void MaximizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
+        private void MaximizeOrRestoreWindowClick(object sender, System.Windows.RoutedEventArgs e)
         {
-            WindowState = System.Windows.WindowState.Maximized;
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowState = WindowState.Normal;
+            }
+            else
+            {
+                WindowState = WindowState.Maximized;
+            }
         }
     }
 }
