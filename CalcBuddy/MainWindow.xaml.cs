@@ -1,5 +1,5 @@
-﻿using MathParser;
-using System;
+﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 
@@ -13,126 +13,98 @@ namespace CalcBuddy
             set { SetValue(WindowChromeCaptionHeightProperty, value); }
         }
 
-        public static readonly DependencyProperty WindowChromeCaptionHeightProperty =
-            DependencyProperty.Register("WindowChromeCaptionHeight", typeof(double), typeof(MainWindow));
+        public static readonly DependencyProperty WindowChromeCaptionHeightProperty = DependencyProperty.Register("WindowChromeCaptionHeight", typeof(double), typeof(MainWindow));
 
-        readonly MathParser.MathParser mathParser;
-        readonly SymbolManager symbolManager;
-        System.Windows.Forms.NotifyIcon notifyIcon;
-        HotKey _hotKey;
-
+        readonly System.Windows.Forms.NotifyIcon _notifyIcon;
+        readonly HotKey _hotKey;
 
         public MainWindow()
         {
-            notifyIcon = new System.Windows.Forms.NotifyIcon();
-            notifyIcon.Icon = new System.Drawing.Icon("CalcBuddy.ico");
-
-            notifyIcon.DoubleClick += notifyIcon_DoubleClick;
-            Deactivated += MainWindow_Deactivated;
             _hotKey = new HotKey(Key.C, KeyModifier.Win, OnHotKeyHandler);
 
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            _notifyIcon.Icon = new System.Drawing.Icon("CalcBuddy.ico");
+
+            _notifyIcon.DoubleClick += NotifyIconDoubleClick;
+
             InitializeComponent();
-            Loaded += MainWindow_Loaded;
-            mathParser = new MathParser.MathParser();
 
-            symbolManager = new SymbolManager();
-            symbolManager.SetTrigonometrySymbols();
-            symbolManager.SetEvalSymbol();
+            Calculator.PlotArea = PlotArea;
+            Closing += MainWindowClosing;
+            StateChanged += MainWindowStateChanged;
+            Loaded += (o, e) => Calculator.Activate();
 
-            Closing += MainWindow_Closing;
+            DependencyPropertyDescriptor dependencyPropertyDescriptor = DependencyPropertyDescriptor.FromProperty(Calculator.IsPlotAreaVisibleProperty, typeof(Calculator));
+            dependencyPropertyDescriptor.AddValueChanged(Calculator, OnIsPlotAreaVisibleChanged);
         }
 
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        void OnIsPlotAreaVisibleChanged(object sender, EventArgs e)
         {
-            notifyIcon.Dispose();
-        }
-
-        private void OnHotKeyHandler(HotKey obj)
-        {
-            if (Visibility == Visibility.Visible)
+            if (Calculator.IsPlotAreaVisible)
             {
-                Hide();
-                notifyIcon.Visible = true;
+                double calculatorWidth = LeftColumnDefinition.ActualWidth + RightColumnDefinition.ActualWidth;
+                Width += MainGrid.ActualHeight;
+                LeftColumnDefinition.Width = new GridLength(calculatorWidth);
             }
             else
             {
-                notifyIcon.Visible = false;
-                Show();
-                Activate();
-                host.InvalidateVisual();
-                textBox.Focus();
+                Width -= RightColumnDefinition.ActualWidth;
+                LeftColumnDefinition.Width = GridLength.Auto;
             }
         }
 
-        void MainWindow_Deactivated(object sender, EventArgs e)
+        void MainWindowStateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                MinimizeToTray();
+            }
+        }
+
+        void MainWindowClosing(object sender, CancelEventArgs e)
+        {
+            _notifyIcon.Dispose();
+            _hotKey.Dispose();
+        }
+
+        void OnHotKeyHandler(HotKey obj)
+        {
+            if (_notifyIcon.Visible)
+            {
+                RestoreFromTray();
+            }
+            else
+            {
+                MinimizeToTray();
+            }
+        }
+
+        void NotifyIconDoubleClick(object sender, EventArgs e)
+        {
+            RestoreFromTray();
+        }
+
+        void MinimizeToTray()
         {
             Hide();
-            notifyIcon.Visible = true;
+            _notifyIcon.Visible = true;
         }
 
-        void notifyIcon_DoubleClick(object sender, EventArgs e)
+        void RestoreFromTray()
         {
-            notifyIcon.Visible = false;
+            _notifyIcon.Visible = false;
             Show();
-            Activate();
-            host.InvalidateVisual();
-            textBox.Focus();
+
+            WindowState = WindowState.Normal;
+            Calculator.Activate();
         }
 
-
-        private async void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        void MinimizeWindowClick(object sender, RoutedEventArgs e)
         {
-            string text = "";
-
-            do
-            {
-                textBox.WriteLine("> ");
-                textBox.Focus();
-                text = await textBox.ReadLineAsync();
-                try
-                {
-                    MathParser.Expression expression = mathParser.Parse(text);
-
-                    string detail = expression.ToDebug();
-                    Value result = expression.Evaluate(symbolManager);
-
-                    if (result.IsExpression)
-                    {
-                        textBox.WriteLine(string.Format("{0} = `{1}`", detail, result));
-                    }
-                    else
-                    {
-                        textBox.WriteLine(string.Format("{0} = {1}", detail, result));
-                    }
-
-                    expression.ExecuteAssignments(symbolManager);
-                }
-                catch (System.Exception exception)
-                {
-                    textBox.WriteLine(string.Format("error: {0}", exception.Message));
-                }
-                finally
-                {
-                    textBox.WriteLine("\n");
-                }
-
-            } while (text != "exit");
-
-
-        }
-
-        private void CloseWindowClick(object sender, System.Windows.RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        private void MinimizeWindowClick(object sender, System.Windows.RoutedEventArgs e)
-        {
-            // TODO black window when restoring with click on task bar
             WindowState = WindowState.Minimized;
         }
 
-        private void MaximizeOrRestoreWindowClick(object sender, System.Windows.RoutedEventArgs e)
+        void MaximizeOrRestoreWindowClick(object sender, RoutedEventArgs e)
         {
             if (WindowState == WindowState.Maximized)
             {
@@ -142,6 +114,11 @@ namespace CalcBuddy
             {
                 WindowState = WindowState.Maximized;
             }
+        }
+
+        void CloseWindowClick(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
