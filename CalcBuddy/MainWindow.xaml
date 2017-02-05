@@ -160,8 +160,8 @@
 					</local:Calculator.Style>
 				</local:Calculator>
 
-				<GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" ShowsPreview="True" 
-                              HorizontalAlignment="Left"
+				<!-- TODO GridSplitter not respecting MinWidth of second ColumnDefinition -->
+				<GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" ShowsPreview="True" HorizontalAlignment="Left"
                               Visibility="{Binding ElementName=Calculator,Path=IsPlotAreaVisible,Converter={StaticResource TrueOrFalseToVisibleOrCollapsedConverter}}" />
 
 				<local:PlotArea x:Name="PlotArea" Grid.Column="1" Margin="5,0,0,0"

@@ -14,12 +14,14 @@
 			<RowDefinition />
 		</Grid.RowDefinitions>
 
-		<StackPanel Orientation="Horizontal" Grid.Row="0">
-			<ToggleButton Content="Plot" IsChecked="{Binding ElementName=parent,Path=IsPlotAreaVisible}" Focusable="False" />
+		<StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,5">
+			<ToggleButton Padding="2" Content="Plot" IsChecked="{Binding ElementName=parent,Path=IsPlotAreaVisible}" Focusable="False" />
+			<Button Padding="2" Margin="5,0,0,0" Content="Clear" Click="ClearButtonClick"  Focusable="False" />
 		</StackPanel>
 
 		<forms:WindowsFormsHost x:Name="host" Grid.Row="1">
-			<local:ConsoleTextBox x:Name="consoleTextBox" WordWrap="True" />
+			<local:ConsoleTextBox x:Name="consoleTextBox" WordWrap="True" 
+                                  BracketsHighlightStrategy="Strategy1" LeftBracket="(" RightBracket=")" />
 		</forms:WindowsFormsHost>
 	</Grid>
 </UserControl>

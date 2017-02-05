@@ -1,6 +1,8 @@
 ﻿using FastColoredTextBoxNS;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CalcBuddy
 {
@@ -13,6 +15,8 @@ namespace CalcBuddy
         private volatile bool isUpdating;
         private Place StartReadPlace { get; set; }
         private volatile TaskCompletionSource<bool> isReadLineModeTask = new TaskCompletionSource<bool>();
+        private List<string> history = new List<string>();
+        private int? historyIndex;
 
         /// <summary>
         /// Append line to end of text.
@@ -48,11 +52,23 @@ namespace CalcBuddy
 
             ClearUndo();
 
-            return new Range(this, StartReadPlace, Range.End).Text.TrimEnd('\r', '\n');
+            string input = new Range(this, StartReadPlace, Range.End).Text.TrimEnd('\r', '\n');
+
+            if (!string.IsNullOrWhiteSpace(input))
+            {
+                history.Add(input);
+            }
+
+            return input;
         }
 
         public override void OnTextChanging(ref string text)
         {
+            if (!isUpdating)
+            {
+                historyIndex = null;
+            }
+
             if (isReadLineModeTask.Task.IsCompleted && !isUpdating)
             {
                 text = ""; //cancel changing
@@ -73,8 +89,16 @@ namespace CalcBuddy
 
                 if (text != null && text.Contains('\n'))
                 {
-                    text = text.Substring(0, text.IndexOf('\n') + 1);
-                    isReadLineModeTask.TrySetResult(false);
+                    string input = new Range(this, StartReadPlace, Range.End).Text;
+                    if (!string.IsNullOrWhiteSpace(input))
+                    {
+                        text = text.Substring(0, text.IndexOf('\n') + 1);
+                        isReadLineModeTask.TrySetResult(false);
+                    }
+                    else
+                    {
+                        text = text.TrimEnd('\n');
+                    }
                 }
             }
 
@@ -89,6 +113,8 @@ namespace CalcBuddy
             isUpdating = true;
 
             base.Clear();
+            history.Clear();
+            historyIndex = null;
 
             isUpdating = false;
             if (oldIsReadMode)
@@ -97,6 +123,70 @@ namespace CalcBuddy
             }
 
             StartReadPlace = Place.Empty;
+        }
+
+        public override bool ProcessKey(Keys keyData)
+        {
+            if (keyData == Keys.Up)
+            {
+                if (history.Count > 0)
+                {
+                    if (historyIndex.HasValue)
+                    {
+                        if (historyIndex.Value > 0)
+                        {
+                            historyIndex--;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        historyIndex = history.Count - 1;
+
+                        string input = new Range(this, StartReadPlace, Range.End).Text;
+                        if (!string.IsNullOrWhiteSpace(input))
+                        {
+                            history.Add(input);
+                        }
+                    }
+
+                    isUpdating = true;
+                    InsertTextAndRestoreSelection(new Range(this, StartReadPlace, Range.End), history[historyIndex.Value], DefaultStyle);
+                    isUpdating = false;
+
+                }
+
+                return true;
+            }
+
+            if (keyData == Keys.Down)
+            {
+                if (historyIndex.HasValue)
+                {
+                    if (historyIndex.Value < history.Count - 1)
+                    {
+                        historyIndex++;
+                        isUpdating = true;
+                        InsertTextAndRestoreSelection(new Range(this, StartReadPlace, Range.End), history[historyIndex.Value], DefaultStyle);
+                        isUpdating = false;
+                    }
+                }
+
+                return true;
+            }
+
+            if (keyData == Keys.Left)
+            {
+                if (Selection.Start <= StartReadPlace)
+                {
+                    return true;
+                }
+            }
+
+            return base.ProcessKey(keyData);
         }
     }
 }

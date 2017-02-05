@@ -54,22 +54,31 @@ namespace CalcBuddy
             do
             {
                 consoleTextBox.WriteLine("> ");
-                consoleTextBox.Focus();
+
                 text = await consoleTextBox.ReadLineAsync();
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
                 try
                 {
                     MathParser.Expression expression = mathParser.Parse(text);
 
-                    string detail = expression.ToDebug();
                     Value result = expression.Evaluate(symbolManager);
 
-                    if (result.IsExpression)
+                    if (result.IsEmpty || result.IsFunction)
                     {
-                        consoleTextBox.WriteLine(string.Format("{0} = `{1}`", detail, result));
+
+                    }
+                    else if (result.IsExpression)
+                    {
+                        consoleTextBox.WriteLine(string.Format("`{0}`", result));
                     }
                     else
                     {
-                        consoleTextBox.WriteLine(string.Format("{0} = {1}", detail, result));
+                        consoleTextBox.WriteLine(string.Format("{0}", result));
                     }
 
                     expression.ExecuteAssignments(symbolManager);
@@ -83,12 +92,17 @@ namespace CalcBuddy
                     consoleTextBox.WriteLine("\n");
                 }
 
-            } while (text != "exit");
+            } while (true);
         }
 
         private void PlotArea_PlotExecuted(object sender, EventArgs e)
         {
             IsPlotAreaVisible = true;
+        }
+
+        private void ClearButtonClick(object sender, RoutedEventArgs e)
+        {
+            consoleTextBox.Clear();
         }
     }
 }
