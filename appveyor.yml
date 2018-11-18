@@ -9,12 +9,17 @@ build:
 artifacts:
   - path: CalcBuddy/bin/Release/bridge
     name: CalcBuddy
+environment:
+  access_token:
+    secure: 6c7e5d48cd0f2fbf54cdce8d63dd36873a50c68e
 deploy_script:
+  - git config --global credential.helper store
+  - ps: Add-Content "$HOME\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
+  - git config user.email "dd-tom@web.de"
+  - git config user.name "AppVeyor"
   - git checkout origin/gh-pages
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
   - bash -c "git mv -v CalcBuddy/bin/Release/bridge/* ."
-  - git config user.email "dd-tom@web.de"
-  - git config user.name "AppVeyor"
   - git commit -m "deploy script"
   - git push origin HEAD:gh-pages
