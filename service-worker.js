@@ -5,16 +5,16 @@ self.addEventListener('install', e => {
     e.waitUntil(
       caches.open(cacheName).then(cache => {
           return cache.addAll([
-            `/`,
-            `/index.html`,
-            `/bridge.js`,
-            `/bridge.meta.js`,
-            `/CalcBuddy.js`,
-            `/codemirror.css`,
-            `/codemirror.js`,
-            `/Parser.js`,
-            `/require.js`,
-            `/Tokenizer.js`
+            `.`,
+            `index.html`,
+            `bridge.js`,
+            `bridge.meta.js`,
+            `CalcBuddy.js`,
+            `codemirror.css`,
+            `codemirror.js`,
+            `Parser.js`,
+            `require.js`,
+            `Tokenizer.js`
           ])
           .then(() => self.skipWaiting());
       })
