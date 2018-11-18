@@ -17,4 +17,4 @@ deploy_script:
   - git config user.email "dd-tom@web.de"
   - git config user.name "AppVeyor"
   - git commit -m "deploy script"
-  - git push origin gh-pages
+  - git push origin HEAD:gh-pages
