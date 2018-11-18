@@ -13,10 +13,10 @@ environment:
   access_token:
     secure: f0ce6c6ead1b23fb9273f12939b82781d47d6685
 deploy_script:
-  - git config credential.helper store
+  - git config --global credential.helper store
+  - git config --global user.email "dd-tom@web.de"
+  - git config --global user.name "AppVeyor"
   - ps: Add-Content "$HOME\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
-  - git config user.email "dd-tom@web.de"
-  - git config user.name "AppVeyor"
   - git checkout origin/gh-pages
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
