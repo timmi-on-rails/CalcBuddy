@@ -3,10 +3,11 @@ version: 1.0.{build}
 configuration: Release
 platform: Any CPU
 before_build:
-- ps: nuget restore
+  - ps: nuget restore
 build:
   verbosity: minimal
 artifacts:
-- path: CalcBuddy\bin\Release\bridge
-  name: CalcBuddy
-  
+  - path: CalcBuddy\bin\Release\bridge
+    name: CalcBuddy
+deploy_script:
+  - git checkout origin/gh-pages  
