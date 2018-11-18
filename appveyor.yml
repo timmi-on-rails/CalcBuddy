@@ -3,7 +3,7 @@ version: 1.0.{build}
 configuration: Release
 platform: Any CPU
 before_build:
-  - ps: nuget restore
+  - nuget restore
 build:
   verbosity: minimal
 artifacts:
@@ -13,6 +13,6 @@ deploy_script:
   - git checkout origin/gh-pages
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
-  - git mv CalcBuddy/bin/Release/bridge/* .
+  - git mv -v CalcBuddy/bin/Release/bridge/* .
   - git commit -m 'deploy script'
   - git push
