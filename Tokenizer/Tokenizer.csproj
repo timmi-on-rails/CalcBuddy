@@ -44,6 +44,7 @@
     <Compile Include="ErrorCode.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bridge.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
