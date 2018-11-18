@@ -13,6 +13,6 @@ deploy_script:
   - git checkout origin/gh-pages
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
-  - git mv -v CalcBuddy/bin/Release/bridge/* .
+  - bash -c "git mv -v CalcBuddy/bin/Release/bridge/* ."
   - git commit -m 'deploy script'
   - git push
