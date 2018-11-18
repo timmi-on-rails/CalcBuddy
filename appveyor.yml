@@ -14,5 +14,5 @@ deploy_script:
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
   - bash -c "git mv -v CalcBuddy/bin/Release/bridge/* ."
-  - git commit -m 'deploy script'
+  - git commit -m "deploy script"
   - git push
