@@ -14,5 +14,7 @@ deploy_script:
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
   - bash -c "git mv -v CalcBuddy/bin/Release/bridge/* ."
-  - git commit -m "deploy script" --author="AppVeyor <dd-tom@web.de>"
+  - git config user.email "dd-tom@web.de"
+  - git config user.name "AppVeyor"
+  - git commit -m "deploy script"
   - git push
