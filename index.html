@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <title>CalcBuddy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="bridge.js"></script>
     <script src="bridge.meta.js"></script>
@@ -11,7 +12,27 @@
     <script src="Tokenizer.js"></script>
     <script src="Parser.js"></script>
     <script src="CalcBuddy.js"></script>
+
     <link rel="stylesheet" href="codemirror.css">
+    <link rel="manifest" href="/manifest.json">
+
+    <script>
+
+        // Check that service workers are registered
+        if ('serviceWorker' in navigator) {
+          // Use the window load event to keep the page load performant
+          window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+              .then(function (registration) {
+                  console.log('Service Worker Registered');
+              });
+
+              navigator.serviceWorker.ready.then(function (registration) {
+                  console.log('Service Worker Ready');
+              });
+          });
+        }
+    </script>
 </head>
 <body>
 </body>
