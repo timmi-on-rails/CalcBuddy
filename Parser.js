@@ -3,7 +3,7 @@
  * @copyright Copyright ©  2015
  * @compiler Bridge.NET 17.4.0
  */
-Bridge.assembly("shunting_yard", function ($asm, globals) {
+Bridge.assembly("Parser", function ($asm, globals) {
     "use strict";
 
     Bridge.define("MathParser.IInfixParselet", {

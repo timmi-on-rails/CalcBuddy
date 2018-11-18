@@ -1,4 +1,4 @@
-Bridge.assembly("shunting_yard", function ($asm, globals) {
+Bridge.assembly("Parser", function ($asm, globals) {
     "use strict";
 
 
