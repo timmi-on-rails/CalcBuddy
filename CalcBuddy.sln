@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28010.2041
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalcBuddy", "CalcBuddy\CalcBuddy.csproj", "{B1A6E773-EE07-4928-911B-D5F410E14F23}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokenizer", "Tokenizer\Tokenizer.csproj", "{C54BCA00-9967-47BF-84B2-F43627C560E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parser", "Parser\Parser.csproj", "{0BFAE215-D589-446E-8FED-89A00EAB498C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{B1A6E773-EE07-4928-911B-D5F410E14F23}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1A6E773-EE07-4928-911B-D5F410E14F23}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1A6E773-EE07-4928-911B-D5F410E14F23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C54BCA00-9967-47BF-84B2-F43627C560E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C54BCA00-9967-47BF-84B2-F43627C560E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C54BCA00-9967-47BF-84B2-F43627C560E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C54BCA00-9967-47BF-84B2-F43627C560E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BFAE215-D589-446E-8FED-89A00EAB498C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BFAE215-D589-446E-8FED-89A00EAB498C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BFAE215-D589-446E-8FED-89A00EAB498C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BFAE215-D589-446E-8FED-89A00EAB498C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,124 @@
+﻿<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0BFAE215-D589-446E-8FED-89A00EAB498C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MathParser</RootNamespace>
+    <AssemblyName>shunting_yard</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>anycpu</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoStdLib>true</NoStdLib>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bridge, Version=17.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Core.17.4.0\lib\net40\Bridge.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="expressions\BinaryExpression.cs" />
+    <Compile Include="expressions\ValueExpression.cs" />
+    <Compile Include="expressions\IExpression.cs" />
+    <Compile Include="expressions\CallExpression.cs" />
+    <Compile Include="expressions\VariableExpression.cs" />
+    <Compile Include="expressions\VariableAssignmentExpression.cs" />
+    <Compile Include="visitors\IExpressionVisitor.cs" />
+    <Compile Include="expressions\BinaryExpressionType.cs" />
+    <Compile Include="expressions\PrefixExpressionType.cs" />
+    <Compile Include="expressions\PrefixExpression.cs" />
+    <Compile Include="expressions\PostfixExpression.cs" />
+    <Compile Include="parser\MathParser.cs" />
+    <Compile Include="expressions\PostfixExpressionType.cs" />
+    <Compile Include="parser\Associativity.cs" />
+    <Compile Include="expressions\TernaryExpression.cs" />
+    <Compile Include="expressions\FunctionAssignmentExpression.cs" />
+    <Compile Include="visitors\BottomUpExpressionVisitor.cs" />
+    <Compile Include="visitors\AssignVisitor.cs" />
+    <Compile Include="visitors\FunctionExpressionVisitor.cs" />
+    <Compile Include="visitors\PrintVisitor.cs" />
+    <Compile Include="parser\exceptions\ParserException.cs" />
+    <Compile Include="parser\exceptions\ExpectedTokenException.cs" />
+    <Compile Include="visitors\GraphvizVisitor.cs" />
+    <Compile Include="parser\ExpressionParser.cs" />
+    <Compile Include="parser\parselets\ParseExpressionDelegate.cs" />
+    <Compile Include="parser\Precedences.cs" />
+    <Compile Include="parser\parselets\IPrefixParselet.cs" />
+    <Compile Include="parser\parselets\IInfixParselet.cs" />
+    <Compile Include="parser\parselets\PostfixOperatorParselet.cs" />
+    <Compile Include="parser\parselets\PrefixOperatorParselet.cs" />
+    <Compile Include="parser\parselets\BinaryOperatorParselet.cs" />
+    <Compile Include="parser\parselets\GroupParselet.cs" />
+    <Compile Include="parser\parselets\TernaryParselet.cs" />
+    <Compile Include="parser\parselets\IntegerParselet.cs" />
+    <Compile Include="parser\parselets\VariableParselet.cs" />
+    <Compile Include="parser\parselets\CallParselet.cs" />
+    <Compile Include="parser\exceptions\BadAssignmentException.cs" />
+    <Compile Include="parser\parselets\AssignParselet.cs" />
+    <Compile Include="parser\exceptions\UnknownVariableException.cs" />
+    <Compile Include="expressions\GroupExpression.cs" />
+    <Compile Include="visitors\EvaluationException.cs" />
+    <Compile Include="visitors\Traversal.cs" />
+    <Compile Include="symbol_manager\SymbolManager.cs" />
+    <Compile Include="symbol_manager\ISymbolManager.cs" />
+    <Compile Include="symbol_manager\TrigonometrySymbols.cs" />
+    <Compile Include="parser\parselets\FixValueParselet.cs" />
+    <Compile Include="parser\parselets\FloatingPointNumberParselet %28copy%29.cs" />
+    <Compile Include="expressions\SymbolicExpression.cs" />
+    <Compile Include="symbol_manager\Expression.cs" />
+    <Compile Include="evaluation\EvaluationVisitor.cs" />
+    <Compile Include="evaluation\Value.cs" />
+    <Compile Include="evaluation\Add.cs" />
+    <Compile Include="symbol_manager\EvaluateSymbols.cs" />
+    <Compile Include="symbol_manager\Identifier.cs" />
+    <Compile Include="parser\TokenStream.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Tokenizer\Tokenizer.csproj">
+      <Project>{c54bca00-9967-47bf-84b2-f43627c560e0}</Project>
+      <Name>Tokenizer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="..\packages\Bridge.Min.17.4.0\build\Bridge.Min.targets" Condition="Exists('..\packages\Bridge.Min.17.4.0\build\Bridge.Min.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>Dieses Projekt verweist auf mindestens ein NuGet-Paket, das auf diesem Computer fehlt. Verwenden Sie die Wiederherstellung von NuGet-Paketen, um die fehlenden Dateien herunterzuladen. Weitere Informationen finden Sie unter "http://go.microsoft.com/fwlink/?LinkID=322105". Die fehlende Datei ist "{0}".</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Bridge.Min.17.4.0\build\Bridge.Min.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bridge.Min.17.4.0\build\Bridge.Min.targets'))" />
+  </Target>
+</Project>

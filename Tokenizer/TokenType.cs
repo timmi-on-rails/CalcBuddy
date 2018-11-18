@@ -1,0 +1,42 @@
+﻿namespace Tokenizer
+{
+	public enum TokenType
+	{
+		Tilde,
+		Assignment,
+		Equal,
+		NotEqual,
+		LeftParenthesis,
+		RightParenthesis,
+		Plus,
+		Minus,
+		Star,
+		Slash,
+		Pow,
+		Identifier,
+		Integer,
+		Decimal,
+		QuestionMark,
+		Colon,
+		Semicolon,
+		Dot,
+		CurlyLeft,
+		CurlyRight,
+		BracketLeft,
+		BracketRight,
+		EndOfFile,
+		Less,
+		Greater,
+		Comma,
+		Unknown,
+		LessOrEqual,
+		GreaterOrEqual,
+		WhiteSpace,
+		Percent,
+		Exclamation,
+		AndDouble,
+		AndSingle,
+		PipeSingle,
+		PipeDouble
+	}
+}
