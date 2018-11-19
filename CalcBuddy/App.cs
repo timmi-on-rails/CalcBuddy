@@ -10,14 +10,11 @@ namespace CalcBuddy
 		public static void Main()
 		{
 			System.Console.WriteLine($"Version: {Version.Info}");
-			var parser2 = new MathParser.MathParser();
-			System.Console.WriteLine("Hello");
-			var result2 = parser2.Parse("1+1");
-			System.Console.WriteLine(result2.Evaluate());
 
-			var d1 = new HTMLTextAreaElement();
-			d1.style.height = "200px";
-			d1.style.width = "200px";
+			var d1 = new HTMLTextAreaElement
+			{
+				autofocus = true
+			};
 
 			document.body.appendChild(d1);
 			var editor = CodeMirror.fromTextArea(d1, new CodeMirror.EditorConfiguration()
@@ -26,7 +23,7 @@ namespace CalcBuddy
 			});
 
 			Dictionary<double, CodeMirror.LineWidget> widgets = new Dictionary<double, CodeMirror.LineWidget>();
-
+			editor.setSize("100%", "100%");
 			editor.on(Retyped.codemirror.Literals.change, (instance, change) =>
 			{
 				double line1 = change.from.line;
