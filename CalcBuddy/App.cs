@@ -9,6 +9,7 @@ namespace CalcBuddy
 	{
 		public static void Main()
 		{
+			System.Console.WriteLine($"Version: {Version.Info}");
 			var parser2 = new MathParser.MathParser();
 			System.Console.WriteLine("Hello");
 			var result2 = parser2.Parse("1+1");
