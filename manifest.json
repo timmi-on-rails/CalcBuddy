@@ -1,10 +1,10 @@
 {
   "name": "CalcBuddy",
   "short_name": "CalcBuddy",
-   "icons": [
+  "icons": [
     {
-      "src": "icons/icon-128x128.png",
-      "sizes": "192x192",
+      "src": "icons/calculator-256x256.png",
+      "sizes": "256x256",
       "type": "image/png"
     }
   ],
