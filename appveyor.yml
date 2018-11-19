@@ -11,7 +11,7 @@ artifacts:
     name: CalcBuddy
 environment:
   access_token:
-    secure: 4bd40459cce3f9dab002c2d8bbc3fe6a21d69cca
+    secure: lHU6C4ySXv097DGjND1mOt9A3oxkGBljn9aWK3Y7jfrPbvAtDHGX7hye+xE4AwDW
 deploy_script:
   - git config --global credential.helper store
   - git config --global user.email "dd-tom@web.de"
