@@ -1,6 +1,13 @@
 {
   "name": "CalcBuddy",
   "short_name": "CalcBuddy",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "128x128",
+      "type": "image/x-icon"
+    }
+  ],
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#3E4EB8",
