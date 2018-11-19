@@ -11,13 +11,12 @@ artifacts:
     name: CalcBuddy
 environment:
   access_token:
-    secure: lHU6C4ySXv097DGjND1mOt9A3oxkGBljn9aWK3Y7jfrPbvAtDHGX7hye+xE4AwDW
+    secure: Mad20djD7L0vIx2lPd9wh4P3NfbdhuyfAAK/rbxLQERFnhzoHD77XINWT9G4qsFD
 deploy_script:
   - git config --global credential.helper store
   - git config --global user.email "dd-tom@web.de"
   - git config --global user.name "AppVeyor"
   - ps: Add-Content "$HOME\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
-  - type "%USERPROFILE%\.git-credentials"
   - git checkout origin/gh-pages
   - git rm -rf .
   - git add CalcBuddy/bin/Release/bridge/*
