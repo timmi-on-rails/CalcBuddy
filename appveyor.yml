@@ -4,7 +4,7 @@ configuration: Release
 platform: Any CPU
 before_build:
   - nuget restore
-  - echo "namespace CalcBuddy { static class Version { public const string Info = "%APPVEYOR_BUILD_VERSION%"; } }" > CalcBuddy/Version.cs
+  - echo namespace CalcBuddy { static class Version { public const string Info = "%APPVEYOR_BUILD_VERSION%"; } } > CalcBuddy/Version.cs
 build:
   verbosity: minimal
 artifacts:
