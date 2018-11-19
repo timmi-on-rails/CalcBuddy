@@ -7,6 +7,8 @@ before_build:
   - echo namespace CalcBuddy { static class Version { public const string Info = "%APPVEYOR_BUILD_VERSION%"; } } > CalcBuddy/Version.cs
 build:
   verbosity: minimal
+after_build:
+  - git checkout CalcBuddy/Version.cs
 artifacts:
   - path: CalcBuddy/bin/Release/bridge
     name: CalcBuddy
