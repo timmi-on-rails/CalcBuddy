@@ -1,9 +1,9 @@
-﻿using NUnit.Framework;
+﻿using BridgeTest;
 
 namespace ExpressionTest
 {
 	[TestFixture]
-	public class Test
+	public class Tests
 	{
 		[Test]
 		public void TestSum()

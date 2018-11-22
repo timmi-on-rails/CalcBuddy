@@ -1,6 +1,5 @@
-﻿using System;
+﻿using BridgeTest;
 using MathParser;
-using NUnit.Framework;
 
 namespace ExpressionTest
 {

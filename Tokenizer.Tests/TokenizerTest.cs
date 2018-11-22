@@ -1,7 +1,7 @@
-﻿using System;
+﻿using BridgeTest;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using Tokenizer;
 
 namespace ExpressionTest
