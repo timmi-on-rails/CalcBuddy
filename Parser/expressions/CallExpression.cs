@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace MathParser
+namespace Parser
 {
 	class CallExpression : IExpression
 	{

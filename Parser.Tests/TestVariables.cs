@@ -1,5 +1,5 @@
 ﻿using BridgeTest;
-using MathParser;
+using Parser;
 
 namespace Parser.Tests
 {
@@ -11,7 +11,7 @@ namespace Parser.Tests
 		{
 			SymbolManager symbolManager = new SymbolManager();
 
-			MathParser.MathParser parser = new MathParser.MathParser();
+			Parser.MathParser parser = new Parser.MathParser();
 			Expression expression = parser.Parse("a = 3");
 			expression.ExecuteAssignments(symbolManager);
 

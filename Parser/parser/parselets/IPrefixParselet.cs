@@ -1,6 +1,6 @@
 ﻿using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	interface IPrefixParselet
 	{

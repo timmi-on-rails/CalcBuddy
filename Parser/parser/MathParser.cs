@@ -2,7 +2,7 @@
 using System.Linq;
 using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	public class MathParser
 	{

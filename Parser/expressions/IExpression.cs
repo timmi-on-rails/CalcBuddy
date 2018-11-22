@@ -1,4 +1,4 @@
-﻿namespace MathParser
+﻿namespace Parser
 {
 	// TODO we need some source context in expression tree aswell
 

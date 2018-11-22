@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MathParser
+namespace Parser
 {
 	class UnknownVariableException : ParserException
 	{

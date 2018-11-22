@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	class TokenStream : IDisposable
 	{

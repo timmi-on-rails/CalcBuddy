@@ -1,7 +1,7 @@
 ﻿using System;
 using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	class ExpectedTokenException : ParserException
 	{

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MathParser
+namespace Parser
 {
 	public class SymbolManager : ISymbolManager
 	{

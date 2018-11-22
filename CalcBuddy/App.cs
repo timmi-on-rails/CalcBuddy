@@ -34,7 +34,7 @@ namespace CalcBuddy
 				}
 
 				string l = instance.getDoc().getLine(line1);
-				var parser = new MathParser.MathParser();
+				var parser = new Parser.MathParser();
 				try
 				{
 					var result = parser.Parse(l).Evaluate();

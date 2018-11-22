@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MathParser
+namespace Parser
 {
 	public static class TrigonometrySymbols
 	{

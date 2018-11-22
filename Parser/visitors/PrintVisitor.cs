@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MathParser
+namespace Parser
 {
 	class PrintVisitor : BottomUpExpressionVisitor
 	{

@@ -2,7 +2,7 @@
 using System.Globalization;
 using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	class FloatingPointNumberParselet : IPrefixParselet
 	{

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MathParser
+namespace Parser
 {
 	public delegate Value Function(params Value[] arguments);
 

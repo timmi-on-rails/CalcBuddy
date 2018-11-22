@@ -1,5 +1,5 @@
 ﻿using BridgeTest;
-using MathParser;
+using Parser;
 
 namespace Parser.Tests
 {

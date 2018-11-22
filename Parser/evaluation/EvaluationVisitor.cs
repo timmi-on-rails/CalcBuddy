@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 
-namespace MathParser
+namespace Parser
 {
 	class EvaluationVisitor : IExpressionVisitor
 	{

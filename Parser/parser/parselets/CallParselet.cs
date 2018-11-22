@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	class CallParselet : IInfixParselet
 	{

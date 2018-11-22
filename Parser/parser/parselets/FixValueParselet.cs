@@ -1,6 +1,6 @@
 ﻿using Tokenizer;
 
-namespace MathParser
+namespace Parser
 {
 	class FixValueParselet : IPrefixParselet
 	{

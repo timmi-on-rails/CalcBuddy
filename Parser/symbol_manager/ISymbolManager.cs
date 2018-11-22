@@ -1,4 +1,4 @@
-﻿namespace MathParser
+﻿namespace Parser
 {
 	public interface ISymbolManager
 	{
