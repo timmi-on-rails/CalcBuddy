@@ -246,10 +246,13 @@ namespace Parser
 						long res = 1;
 						long val = value.ToInt64();
 
-						while (val != 1)
+						if (val > 0)
 						{
-							res = res * val;
-							val = val - 1;
+							while (val != 1)
+							{
+								res = res * val;
+								val = val - 1;
+							}
 						}
 
 						result = Value.Integer(res);
