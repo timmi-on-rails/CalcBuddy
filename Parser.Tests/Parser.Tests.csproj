@@ -5,8 +5,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{6578803C-9849-4BB2-BEAA-C1D0DB6A7935}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>ExpressionTest</RootNamespace>
-    <AssemblyName>ExpressionTest</AssemblyName>
+    <RootNamespace>Parser.Tests</RootNamespace>
+    <AssemblyName>Parser.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>

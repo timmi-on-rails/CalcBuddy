@@ -1,6 +1,6 @@
 ﻿using BridgeTest;
 
-namespace ExpressionTest
+namespace Parser.Tests
 {
 	[TestFixture]
 	public class Tests
@@ -84,6 +84,12 @@ namespace ExpressionTest
 		public void TestTernary()
 		{
 			"(1<2) ? 200 : 300".ShouldEvaluateTo(200);
+		}
+
+		//[Test]
+		public void TestZeroFaculty()
+		{
+			"0!".ShouldEvaluateTo(0);
 		}
 	}
 }

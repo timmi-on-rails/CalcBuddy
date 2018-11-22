@@ -1,6 +1,6 @@
 ﻿using BridgeTest;
 
-namespace ExpressionTest
+namespace Parser.Tests
 {
 	[TestFixture]
 	public class TestParser

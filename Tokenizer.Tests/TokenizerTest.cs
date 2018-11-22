@@ -2,9 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Tokenizer;
 
-namespace ExpressionTest
+namespace Tokenizer.Tests
 {
 	[TestFixture]
 	public class TokenizerTest

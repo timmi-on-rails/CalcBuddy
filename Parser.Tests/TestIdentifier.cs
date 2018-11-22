@@ -1,7 +1,7 @@
 ﻿using BridgeTest;
 using MathParser;
 
-namespace ExpressionTest
+namespace Parser.Tests
 {
 	[TestFixture]
 	public class TestIdentifier

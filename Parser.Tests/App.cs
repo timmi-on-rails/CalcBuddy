@@ -1,4 +1,4 @@
-﻿namespace ExpressionTest
+﻿namespace Parser.Tests
 {
 	class App
 	{

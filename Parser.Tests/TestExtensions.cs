@@ -1,6 +1,6 @@
 ﻿using BridgeTest;
 
-namespace ExpressionTest
+namespace Parser.Tests
 {
 	public static class TestExtensions
 	{
