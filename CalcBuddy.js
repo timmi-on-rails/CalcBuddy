@@ -51,7 +51,7 @@ Bridge.assembly("CalcBuddy", function ($asm, globals) {
                 },
                 ctors: {
                     init: function () {
-                        this.Info = "1.0.64";
+                        this.Info = "1.0.65";
                     }
                 }
             }

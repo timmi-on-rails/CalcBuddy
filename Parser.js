@@ -1105,9 +1105,11 @@ Bridge.assembly("Parser", function ($asm, globals) {
                         case Parser.PostfixExpressionType.Factorial: 
                             var res = System.Int64(1);
                             var val = value.ToInt64();
-                            while (val.ne(System.Int64(1))) {
-                                res = res.mul(val);
-                                val = val.sub(System.Int64(1));
+                            if (val.gt(System.Int64(0))) {
+                                while (val.ne(System.Int64(1))) {
+                                    res = res.mul(val);
+                                    val = val.sub(System.Int64(1));
+                                }
                             }
                             result = Parser.Value.Integer(res);
                             break;
