@@ -6,15 +6,15 @@
 Bridge.assembly("Parser", function ($asm, globals) {
     "use strict";
 
-    Bridge.define("MathParser.IInfixParselet", {
+    Bridge.define("Parser.IInfixParselet", {
         $kind: "interface"
     });
 
-    Bridge.define("MathParser.IExpressionVisitor", {
+    Bridge.define("Parser.IExpressionVisitor", {
         $kind: "interface"
     });
 
-    Bridge.define("MathParser.Associativity", {
+    Bridge.define("Parser.Associativity", {
         $kind: "enum",
         statics: {
             fields: {
@@ -24,7 +24,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.AssociativityExtensions", {
+    Bridge.define("Parser.AssociativityExtensions", {
         statics: {
             methods: {
                 /**
@@ -33,16 +33,16 @@ Bridge.assembly("Parser", function ($asm, globals) {
                  *
                  * @static
                  * @public
-                 * @this MathParser.AssociativityExtensions
-                 * @memberof MathParser.AssociativityExtensions
-                 * @param   {MathParser.Associativity}    associativity
-                 * @return  {number}                                       The precedence increment.
+                 * @this Parser.AssociativityExtensions
+                 * @memberof Parser.AssociativityExtensions
+                 * @param   {Parser.Associativity}    associativity
+                 * @return  {number}                                   The precedence increment.
                  */
                 ToPrecedenceIncrement: function (associativity) {
                     switch (associativity) {
-                        case MathParser.Associativity.Left: 
+                        case Parser.Associativity.Left: 
                             return 0;
-                        case MathParser.Associativity.Right: 
+                        case Parser.Associativity.Right: 
                             return -1;
                         default: 
                             throw new System.ArgumentException.$ctor1("unhandled associtivity");
@@ -52,7 +52,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.ParserException", {
+    Bridge.define("Parser.ParserException", {
         inherits: [System.Exception],
         ctors: {
             ctor: function () {
@@ -70,11 +70,11 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.IExpression", {
+    Bridge.define("Parser.IExpression", {
         $kind: "interface"
     });
 
-    Bridge.define("MathParser.BinaryExpressionType", {
+    Bridge.define("Parser.BinaryExpressionType", {
         $kind: "enum",
         statics: {
             fields: {
@@ -94,7 +94,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.EvaluateSymbols", {
+    Bridge.define("Parser.EvaluateSymbols", {
         statics: {
             methods: {
                 SetEvalSymbol: function (symbolManager) {
@@ -104,13 +104,13 @@ Bridge.assembly("Parser", function ($asm, globals) {
                         return value.ToExpression().Evaluate$1(symbolManager);
                     };
 
-                    symbolManager.MathParser$ISymbolManager$Set(MathParser.Identifier.op_Implicit("eval"), MathParser.Value.Function($function));
+                    symbolManager.Parser$ISymbolManager$Set(Parser.Identifier.op_Implicit("eval"), Parser.Value.Function($function));
                 }
             }
         }
     });
 
-    Bridge.define("MathParser.EvaluationException", {
+    Bridge.define("Parser.EvaluationException", {
         inherits: [System.Exception],
         ctors: {
             ctor: function () {
@@ -128,7 +128,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.Expression", {
+    Bridge.define("Parser.Expression", {
         props: {
             Expr: null
         },
@@ -143,31 +143,31 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 return this.Evaluate$1(null);
             },
             Evaluate$1: function (symbolManager) {
-                var evaluationVisitor = new MathParser.EvaluationVisitor(symbolManager);
-                this.Expr.MathParser$IExpression$Accept(evaluationVisitor);
+                var evaluationVisitor = new Parser.EvaluationVisitor(symbolManager);
+                this.Expr.Parser$IExpression$Accept(evaluationVisitor);
                 return evaluationVisitor.GetResult();
             },
             ExecuteAssignments: function (symbolManager) {
-                var assignVisitor = new MathParser.AssignVisitor(symbolManager);
-                this.Expr.MathParser$IExpression$Accept(assignVisitor);
+                var assignVisitor = new Parser.AssignVisitor(symbolManager);
+                this.Expr.Parser$IExpression$Accept(assignVisitor);
             },
             toString: function () {
                 return this.ToDebug();
             },
             ToDebug: function () {
-                var printVisitor = new MathParser.PrintVisitor();
-                this.Expr.MathParser$IExpression$Accept(printVisitor);
+                var printVisitor = new Parser.PrintVisitor();
+                this.Expr.Parser$IExpression$Accept(printVisitor);
                 return printVisitor.GetResult();
             },
             ToGraphviz: function () {
-                var graphvizVisitor = new MathParser.GraphvizVisitor();
-                this.Expr.MathParser$IExpression$Accept(graphvizVisitor);
+                var graphvizVisitor = new Parser.GraphvizVisitor();
+                this.Expr.Parser$IExpression$Accept(graphvizVisitor);
                 return graphvizVisitor.GetResult();
             }
         }
     });
 
-    Bridge.define("MathParser.ExpressionParser", {
+    Bridge.define("Parser.ExpressionParser", {
         statics: {
             fields: {
                 _prefixParselets: null,
@@ -175,72 +175,72 @@ Bridge.assembly("Parser", function ($asm, globals) {
             },
             ctors: {
                 init: function () {
-                    this._prefixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,MathParser.IPrefixParselet))();
-                    this._infixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,MathParser.IInfixParselet))();
+                    this._prefixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IPrefixParselet))();
+                    this._infixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IInfixParselet))();
                 },
                 ctor: function () {
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Identifier, new MathParser.VariableParselet());
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Decimal, new MathParser.FloatingPointNumberParselet());
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Integer, new MathParser.IntegerParselet());
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Identifier, new Parser.VariableParselet());
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Decimal, new Parser.FloatingPointNumberParselet());
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Integer, new Parser.IntegerParselet());
                     //registerPrefixParselet(TokenType.False, new FixValueParselet(Value.Boolean(false)));
                     //registerPrefixParselet(TokenType.True, new FixValueParselet(Value.Boolean(true)));
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.LeftParenthesis, new MathParser.GroupParselet());
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Minus, new MathParser.PrefixOperatorParselet(MathParser.PrefixExpressionType.Negation, MathParser.Precedences.PREFIX));
-                    MathParser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Plus, new MathParser.PrefixOperatorParselet(MathParser.PrefixExpressionType.Positive, MathParser.Precedences.PREFIX));
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.LeftParenthesis, new Parser.GroupParselet());
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Minus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Negation, Parser.Precedences.PREFIX));
+                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Plus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Positive, Parser.Precedences.PREFIX));
 
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Exclamation, new MathParser.PostfixOperatorParselet(MathParser.PostfixExpressionType.Factorial, MathParser.Precedences.POSTFIX));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Assignment, new MathParser.AssignParselet());
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Equal, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Equal, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.NotEqual, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.NotEqual, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Less, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Less, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Greater, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Greater, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LessOrEqual, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.LessOrEqual, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.GreaterOrEqual, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.GreaterOrEqual, MathParser.Precedences.COMPARISON, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.QuestionMark, new MathParser.TernaryParselet());
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LeftParenthesis, new MathParser.CallParselet());
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Plus, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Addition, MathParser.Precedences.SUM, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Minus, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Substraction, MathParser.Precedences.SUM, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Star, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Multiplication, MathParser.Precedences.PRODUCT, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Slash, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Division, MathParser.Precedences.PRODUCT, MathParser.Associativity.Left));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Pow, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Power, MathParser.Precedences.EXPONENT, MathParser.Associativity.Right));
-                    MathParser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Percent, new MathParser.BinaryOperatorParselet(MathParser.BinaryExpressionType.Modulo, MathParser.Precedences.PRODUCT, MathParser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Exclamation, new Parser.PostfixOperatorParselet(Parser.PostfixExpressionType.Factorial, Parser.Precedences.POSTFIX));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Assignment, new Parser.AssignParselet());
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Equal, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Equal, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.NotEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.NotEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Less, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Less, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Greater, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Greater, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LessOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.LessOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.GreaterOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.GreaterOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.QuestionMark, new Parser.TernaryParselet());
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LeftParenthesis, new Parser.CallParselet());
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Plus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Addition, Parser.Precedences.SUM, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Minus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Substraction, Parser.Precedences.SUM, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Star, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Multiplication, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Slash, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Division, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Pow, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Power, Parser.Precedences.EXPONENT, Parser.Associativity.Right));
+                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Percent, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Modulo, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
                 }
             },
             methods: {
                 registerPrefixParselet: function (tokenType, prefixParselet) {
-                    MathParser.ExpressionParser._prefixParselets.add(tokenType, prefixParselet);
+                    Parser.ExpressionParser._prefixParselets.add(tokenType, prefixParselet);
                 },
                 registerInfixParselet: function (tokenType, infixParselet) {
-                    MathParser.ExpressionParser._infixParselets.add(tokenType, infixParselet);
+                    Parser.ExpressionParser._infixParselets.add(tokenType, infixParselet);
                 }
             }
         },
         methods: {
             Parse: function (tokenStream) {
-                return this.ParseExpression(tokenStream, MathParser.Precedences.EXPRESSION);
+                return this.ParseExpression(tokenStream, Parser.Precedences.EXPRESSION);
             },
             ParseExpression: function (tokenStream, precedence) {
                 var token = tokenStream.Consume();
 
                 var prefixParselet = { };
-                if (!MathParser.ExpressionParser._prefixParselets.tryGetValue(token.TokenType, prefixParselet)) {
+                if (!Parser.ExpressionParser._prefixParselets.tryGetValue(token.TokenType, prefixParselet)) {
                     // TODO better exception
                     throw new System.ArgumentException.$ctor1("Could not parse \"" + (token.Content || "") + "\".");
                 }
-                var leftExpression = prefixParselet.v.MathParser$IPrefixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
+                var leftExpression = prefixParselet.v.Parser$IPrefixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
 
                 while (true) {
                     var infixParselet = { };
-                    var isInfix = MathParser.ExpressionParser._infixParselets.tryGetValue(tokenStream.Peek().TokenType, infixParselet);
+                    var isInfix = Parser.ExpressionParser._infixParselets.tryGetValue(tokenStream.Peek().TokenType, infixParselet);
                     if (!isInfix) {
-                        if (MathParser.ExpressionParser._prefixParselets.containsKey(tokenStream.Peek().TokenType)) {
-                            infixParselet.v = MathParser.ExpressionParser._infixParselets.get(Tokenizer.TokenType.Star);
+                        if (Parser.ExpressionParser._prefixParselets.containsKey(tokenStream.Peek().TokenType)) {
+                            infixParselet.v = Parser.ExpressionParser._infixParselets.get(Tokenizer.TokenType.Star);
                         } else {
                             break;
                         }
                     }
 
-                    if (precedence >= infixParselet.v.MathParser$IInfixParselet$Precedence) {
+                    if (precedence >= infixParselet.v.Parser$IInfixParselet$Precedence) {
                         break;
                     }
                     // todo handle juxtaposition multiplication for constants with brackets
@@ -248,7 +248,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                         tokenStream.Consume();
                     }
 
-                    leftExpression = infixParselet.v.MathParser$IInfixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
+                    leftExpression = infixParselet.v.Parser$IInfixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
                 }
 
                 return leftExpression;
@@ -256,27 +256,27 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.ExpressionVisitorExtensions", {
+    Bridge.define("Parser.ExpressionVisitorExtensions", {
         statics: {
             methods: {
                 Traverse: function (visitor, visitSelf, children) {
                     var $t;
                     if (children === void 0) { children = []; }
-                    var traversal = visitor.MathParser$IExpressionVisitor$Traversal;
+                    var traversal = visitor.Parser$IExpressionVisitor$Traversal;
 
-                    if (traversal === MathParser.Traversal.BottomUp) {
+                    if (traversal === Parser.Traversal.BottomUp) {
                         $t = Bridge.getEnumerator(children);
                         try {
                             while ($t.moveNext()) {
                                 var child = $t.Current;
-                                child.MathParser$IExpression$Accept(visitor);
+                                child.Parser$IExpression$Accept(visitor);
                             }
                         } finally {
                             if (Bridge.is($t, System.IDisposable)) {
                                 $t.System$IDisposable$Dispose();
                             }
                         }
-                    } else if (traversal === MathParser.Traversal.None) {
+                    } else if (traversal === Parser.Traversal.None) {
                     } else {
                         throw new System.ArgumentException.$ctor1("unknown traversal type");
                     }
@@ -287,15 +287,15 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.IPrefixParselet", {
+    Bridge.define("Parser.IPrefixParselet", {
         $kind: "interface"
     });
 
-    Bridge.define("MathParser.Identifier", {
+    Bridge.define("Parser.Identifier", {
         statics: {
             methods: {
                 op_Implicit: function (name) {
-                    return new MathParser.Identifier(name);
+                    return new Parser.Identifier(name);
                 },
                 op_Implicit$1: function (identifier) {
                     return identifier._name;
@@ -312,7 +312,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     return System.String.equals(identifier1._name, identifier2._name);
                 },
                 op_Inequality: function (identifier1, identifier2) {
-                    return !(MathParser.Identifier.op_Equality(identifier1, identifier2));
+                    return !(Parser.Identifier.op_Equality(identifier1, identifier2));
                 }
             }
         },
@@ -331,7 +331,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 return this._name;
             },
             equals: function (obj) {
-                var other = (Bridge.as(obj, MathParser.Identifier));
+                var other = (Bridge.as(obj, Parser.Identifier));
 
                 if (other == null) {
                     return false;
@@ -345,23 +345,23 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.ISymbolManager", {
+    Bridge.define("Parser.ISymbolManager", {
         $kind: "interface"
     });
 
-    Bridge.define("MathParser.MathParser", {
+    Bridge.define("Parser.MathParser", {
         methods: {
             Parse: function (expression) {
-                var tokensWithoutWhiteSpaces = System.Linq.Enumerable.from(Tokenizer.Tokenize.FromString(expression)).where($asm.$.MathParser.MathParser.f1);
+                var tokensWithoutWhiteSpaces = System.Linq.Enumerable.from(Tokenizer.Tokenize.FromString(expression)).where($asm.$.Parser.MathParser.f1);
 
-                var tokenStream = new MathParser.TokenStream(tokensWithoutWhiteSpaces);
+                var tokenStream = new Parser.TokenStream(tokensWithoutWhiteSpaces);
                 try {
-                    var expressionParser = new MathParser.ExpressionParser();
+                    var expressionParser = new Parser.ExpressionParser();
                     var rootExpression = expressionParser.Parse(tokenStream);
 
                     tokenStream.Consume$1(Tokenizer.TokenType.EndOfFile);
 
-                    return new MathParser.Expression(rootExpression);
+                    return new Parser.Expression(rootExpression);
                 }
                 finally {
                     if (Bridge.hasValue(tokenStream)) {
@@ -372,15 +372,15 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.ns("MathParser.MathParser", $asm.$);
+    Bridge.ns("Parser.MathParser", $asm.$);
 
-    Bridge.apply($asm.$.MathParser.MathParser, {
+    Bridge.apply($asm.$.Parser.MathParser, {
         f1: function (token) {
             return token.TokenType !== Tokenizer.TokenType.WhiteSpace;
         }
     });
 
-    Bridge.define("MathParser.PostfixExpressionType", {
+    Bridge.define("Parser.PostfixExpressionType", {
         $kind: "enum",
         statics: {
             fields: {
@@ -389,7 +389,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.Precedences", {
+    Bridge.define("Parser.Precedences", {
         statics: {
             fields: {
                 EXPRESSION: 0,
@@ -420,7 +420,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.PrefixExpressionType", {
+    Bridge.define("Parser.PrefixExpressionType", {
         $kind: "enum",
         statics: {
             fields: {
@@ -430,26 +430,26 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.SymbolManagerExtensions", {
+    Bridge.define("Parser.SymbolManagerExtensions", {
         statics: {
             methods: {
                 SetInteger: function (symbolManager, identifier, l) {
-                    symbolManager.MathParser$ISymbolManager$Set(identifier, MathParser.Value.Integer(l));
+                    symbolManager.Parser$ISymbolManager$Set(identifier, Parser.Value.Integer(l));
                 },
                 SetDecimal: function (symbolManager, identifier, d) {
-                    symbolManager.MathParser$ISymbolManager$Set(identifier, MathParser.Value.Decimal(d));
+                    symbolManager.Parser$ISymbolManager$Set(identifier, Parser.Value.Decimal(d));
                 },
                 SetBoolean: function (symbolManager, identifier, b) {
-                    symbolManager.MathParser$ISymbolManager$Set(identifier, MathParser.Value.Boolean(b));
+                    symbolManager.Parser$ISymbolManager$Set(identifier, Parser.Value.Boolean(b));
                 },
                 SetFunction: function (symbolManager, identifier, $function) {
-                    symbolManager.MathParser$ISymbolManager$Set(identifier, MathParser.Value.Function($function));
+                    symbolManager.Parser$ISymbolManager$Set(identifier, Parser.Value.Function($function));
                 }
             }
         }
     });
 
-    Bridge.define("MathParser.TokenStream", {
+    Bridge.define("Parser.TokenStream", {
         inherits: [System.IDisposable],
         fields: {
             _tokenEnumerator: null,
@@ -476,7 +476,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 var nextToken = this.Peek();
 
                 if (nextToken.TokenType !== expectedTokenType) {
-                    throw new MathParser.ExpectedTokenException.$ctor3(expectedTokenType, nextToken.Position);
+                    throw new Parser.ExpectedTokenException.$ctor3(expectedTokenType, nextToken.Position);
                 }
 
                 return this.Consume();
@@ -505,7 +505,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.Traversal", {
+    Bridge.define("Parser.Traversal", {
         $kind: "enum",
         statics: {
             fields: {
@@ -515,13 +515,13 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.TrigonometrySymbols", {
+    Bridge.define("Parser.TrigonometrySymbols", {
         statics: {
             methods: {
                 SetTrigonometrySymbols: function (symbolManager) {
-                    MathParser.TrigonometrySymbols.Define(symbolManager, "sin", Math.sin);
-                    MathParser.TrigonometrySymbols.Define(symbolManager, "cos", Math.cos);
-                    MathParser.TrigonometrySymbols.Define(symbolManager, "tan", Math.tan);
+                    Parser.TrigonometrySymbols.Define(symbolManager, "sin", Math.sin);
+                    Parser.TrigonometrySymbols.Define(symbolManager, "cos", Math.cos);
+                    Parser.TrigonometrySymbols.Define(symbolManager, "tan", Math.tan);
                 },
                 Define: function (symbolManager, symbolName, method) {
                     var $function = function ($arguments) {
@@ -531,46 +531,46 @@ Bridge.assembly("Parser", function ($asm, globals) {
                             if (isNumber) {
                                 var x = $arguments[System.Array.index(0, $arguments)].ToDouble();
 
-                                return MathParser.Value.Decimal(method(x));
+                                return Parser.Value.Decimal(method(x));
                             }
                         }
 
                         var message = System.String.format("Function {0} expects exactly one argument of type number. Given {1} arguments.", symbolName, Bridge.box($arguments.length, System.Int32));
-                        throw new MathParser.EvaluationException.$ctor1(message);
+                        throw new Parser.EvaluationException.$ctor1(message);
                     };
 
-                    symbolManager.MathParser$ISymbolManager$Set(MathParser.Identifier.op_Implicit(symbolName), MathParser.Value.Function($function));
+                    symbolManager.Parser$ISymbolManager$Set(Parser.Identifier.op_Implicit(symbolName), Parser.Value.Function($function));
                 }
             }
         }
     });
 
-    Bridge.define("MathParser.Value", {
+    Bridge.define("Parser.Value", {
         statics: {
             methods: {
                 Integer: function (l) {
-                    return new MathParser.Value(MathParser.Value.Type.Integer, l);
+                    return new Parser.Value(Parser.Value.Type.Integer, l);
                 },
                 Decimal: function (d) {
-                    return new MathParser.Value(MathParser.Value.Type.Decimal, Bridge.box(d, System.Double, System.Double.format, System.Double.getHashCode));
+                    return new Parser.Value(Parser.Value.Type.Decimal, Bridge.box(d, System.Double, System.Double.format, System.Double.getHashCode));
                 },
                 Boolean: function (b) {
-                    return new MathParser.Value(MathParser.Value.Type.Boolean, Bridge.box(b, System.Boolean, System.Boolean.toString));
+                    return new Parser.Value(Parser.Value.Type.Boolean, Bridge.box(b, System.Boolean, System.Boolean.toString));
                 },
                 Function: function ($function) {
-                    return new MathParser.Value(MathParser.Value.Type.Function, $function);
+                    return new Parser.Value(Parser.Value.Type.Function, $function);
                 },
                 Empty: function () {
-                    return new MathParser.Value(MathParser.Value.Type.Empty, null);
+                    return new Parser.Value(Parser.Value.Type.Empty, null);
                 },
                 Expression: function (expression) {
-                    return new MathParser.Value(MathParser.Value.Type.Expression, expression);
+                    return new Parser.Value(Parser.Value.Type.Expression, expression);
                 },
                 Add: function (valueA, valueB) {
                     if (valueA.IsInteger && valueB.IsInteger) {
                         var a = valueA.ToInt64();
                         var b = valueB.ToInt64();
-                        return MathParser.Value.Integer(a.add(b));
+                        return Parser.Value.Integer(a.add(b));
                     }
 
                     var isNumberA = valueA.IsDecimal || valueA.IsInteger;
@@ -579,18 +579,18 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     if (isNumberA && isNumberB) {
                         var a1 = valueA.ToDouble();
                         var b1 = valueB.ToDouble();
-                        return MathParser.Value.Decimal(a1 + b1);
+                        return Parser.Value.Decimal(a1 + b1);
                     }
 
                     if (valueA.IsExpression || valueB.IsExpression) {
-                        var a2 = new MathParser.ValueExpression(valueA);
-                        var b2 = new MathParser.ValueExpression(valueB);
-                        var result = new MathParser.BinaryExpression(MathParser.BinaryExpressionType.Addition, a2, b2);
-                        return MathParser.Value.Expression(new MathParser.Expression(result));
+                        var a2 = new Parser.ValueExpression(valueA);
+                        var b2 = new Parser.ValueExpression(valueB);
+                        var result = new Parser.BinaryExpression(Parser.BinaryExpressionType.Addition, a2, b2);
+                        return Parser.Value.Expression(new Parser.Expression(result));
                     }
 
-                    var message = System.String.format("Incompatible types of operands {0} and {1} for binary operation {2}.", Bridge.box(valueA.ValueType, MathParser.Value.Type, System.Enum.toStringFn(MathParser.Value.Type)), Bridge.box(valueB.ValueType, MathParser.Value.Type, System.Enum.toStringFn(MathParser.Value.Type)), Bridge.box(MathParser.BinaryExpressionType.Addition, MathParser.BinaryExpressionType, System.Enum.toStringFn(MathParser.BinaryExpressionType)));
-                    throw new MathParser.EvaluationException.$ctor1(message);
+                    var message = System.String.format("Incompatible types of operands {0} and {1} for binary operation {2}.", Bridge.box(valueA.ValueType, Parser.Value.Type, System.Enum.toStringFn(Parser.Value.Type)), Bridge.box(valueB.ValueType, Parser.Value.Type, System.Enum.toStringFn(Parser.Value.Type)), Bridge.box(Parser.BinaryExpressionType.Addition, Parser.BinaryExpressionType, System.Enum.toStringFn(Parser.BinaryExpressionType)));
+                    throw new Parser.EvaluationException.$ctor1(message);
                 }
             }
         },
@@ -601,32 +601,32 @@ Bridge.assembly("Parser", function ($asm, globals) {
             ValueType: 0,
             IsEmpty: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Empty;
+                    return this.ValueType === Parser.Value.Type.Empty;
                 }
             },
             IsExpression: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Expression;
+                    return this.ValueType === Parser.Value.Type.Expression;
                 }
             },
             IsInteger: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Integer;
+                    return this.ValueType === Parser.Value.Type.Integer;
                 }
             },
             IsDecimal: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Decimal;
+                    return this.ValueType === Parser.Value.Type.Decimal;
                 }
             },
             IsBoolean: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Boolean;
+                    return this.ValueType === Parser.Value.Type.Boolean;
                 }
             },
             IsFunction: {
                 get: function () {
-                    return this.ValueType === MathParser.Value.Type.Function;
+                    return this.ValueType === Parser.Value.Type.Function;
                 }
             }
         },
@@ -651,7 +651,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 return this._value;
             },
             ToExpression: function () {
-                return Bridge.cast(this._value, MathParser.Expression);
+                return Bridge.cast(this._value, Parser.Expression);
             },
             toString: function () {
                 return Bridge.toString(this._value);
@@ -659,7 +659,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.Value.Type", {
+    Bridge.define("Parser.Value.Type", {
         $kind: "nested enum",
         statics: {
             fields: {
@@ -673,49 +673,49 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.AssignParselet", {
-        inherits: [MathParser.IInfixParselet],
+    Bridge.define("Parser.AssignParselet", {
+        inherits: [Parser.IInfixParselet],
         props: {
             Precedence: {
                 get: function () {
-                    return MathParser.Precedences.ASSIGNMENT;
+                    return Parser.Precedences.ASSIGNMENT;
                 }
             }
         },
         alias: [
-            "Parse", "MathParser$IInfixParselet$Parse",
-            "Precedence", "MathParser$IInfixParselet$Precedence"
+            "Parse", "Parser$IInfixParselet$Parse",
+            "Precedence", "Parser$IInfixParselet$Precedence"
         ],
         methods: {
             Parse: function (parseExpression, tokenStream, leftExpression) {
-                var rightExpression = parseExpression(tokenStream, ((MathParser.Precedences.ASSIGNMENT + MathParser.AssociativityExtensions.ToPrecedenceIncrement(MathParser.Associativity.Right)) | 0));
+                var rightExpression = parseExpression(tokenStream, ((Parser.Precedences.ASSIGNMENT + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
 
-                if (Bridge.is(leftExpression, MathParser.VariableExpression)) {
-                    var identifier = Bridge.cast(leftExpression, MathParser.VariableExpression).Identifier;
-                    return new MathParser.VariableAssignmentExpression(identifier, rightExpression);
-                } else if (Bridge.is(leftExpression, MathParser.CallExpression)) {
-                    var callExpression = Bridge.cast(leftExpression, MathParser.CallExpression);
+                if (Bridge.is(leftExpression, Parser.VariableExpression)) {
+                    var identifier = Bridge.cast(leftExpression, Parser.VariableExpression).Identifier;
+                    return new Parser.VariableAssignmentExpression(identifier, rightExpression);
+                } else if (Bridge.is(leftExpression, Parser.CallExpression)) {
+                    var callExpression = Bridge.cast(leftExpression, Parser.CallExpression);
 
-                    var $arguments = System.Linq.Enumerable.from(callExpression.Arguments).select($asm.$.MathParser.AssignParselet.f1);
-                    var functionExpression = Bridge.as(callExpression.FunctionExpression, MathParser.VariableExpression);
+                    var $arguments = System.Linq.Enumerable.from(callExpression.Arguments).select($asm.$.Parser.AssignParselet.f1);
+                    var functionExpression = Bridge.as(callExpression.FunctionExpression, Parser.VariableExpression);
 
-                    if (System.Linq.Enumerable.from($arguments).all($asm.$.MathParser.AssignParselet.f2) && functionExpression != null) {
-                        return new MathParser.FunctionAssignmentExpression(functionExpression.Identifier, System.Linq.Enumerable.from($arguments).select($asm.$.MathParser.AssignParselet.f3), rightExpression);
+                    if (System.Linq.Enumerable.from($arguments).all($asm.$.Parser.AssignParselet.f2) && functionExpression != null) {
+                        return new Parser.FunctionAssignmentExpression(functionExpression.Identifier, System.Linq.Enumerable.from($arguments).select($asm.$.Parser.AssignParselet.f3), rightExpression);
                     } else {
-                        throw new MathParser.BadAssignmentException.$ctor1("Every argument in a function assignment must be a variable name.");
+                        throw new Parser.BadAssignmentException.$ctor1("Every argument in a function assignment must be a variable name.");
                     }
                 }
 
-                throw new MathParser.BadAssignmentException.$ctor1("The left hand side of an assignment must either be a function signature or a variable name.");
+                throw new Parser.BadAssignmentException.$ctor1("The left hand side of an assignment must either be a function signature or a variable name.");
             }
         }
     });
 
-    Bridge.ns("MathParser.AssignParselet", $asm.$);
+    Bridge.ns("Parser.AssignParselet", $asm.$);
 
-    Bridge.apply($asm.$.MathParser.AssignParselet, {
+    Bridge.apply($asm.$.Parser.AssignParselet, {
         f1: function (argument) {
-            return (Bridge.as(argument, MathParser.VariableExpression));
+            return (Bridge.as(argument, Parser.VariableExpression));
         },
         f2: function (arg) {
             return arg != null;
@@ -725,27 +725,27 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.BottomUpExpressionVisitor", {
-        inherits: [MathParser.IExpressionVisitor],
+    Bridge.define("Parser.BottomUpExpressionVisitor", {
+        inherits: [Parser.IExpressionVisitor],
         props: {
             Traversal: {
                 get: function () {
-                    return MathParser.Traversal.BottomUp;
+                    return Parser.Traversal.BottomUp;
                 }
             }
         },
         alias: [
-            "Traversal", "MathParser$IExpressionVisitor$Traversal",
-            "Visit$4", "MathParser$IExpressionVisitor$Visit$4",
-            "Visit$1", "MathParser$IExpressionVisitor$Visit$1",
-            "Visit$8", "MathParser$IExpressionVisitor$Visit$8",
-            "Visit$3", "MathParser$IExpressionVisitor$Visit$3",
-            "Visit$2", "MathParser$IExpressionVisitor$Visit$2",
-            "Visit$6", "MathParser$IExpressionVisitor$Visit$6",
-            "Visit$9", "MathParser$IExpressionVisitor$Visit$9",
-            "Visit$7", "MathParser$IExpressionVisitor$Visit$7",
-            "Visit$5", "MathParser$IExpressionVisitor$Visit$5",
-            "Visit", "MathParser$IExpressionVisitor$Visit"
+            "Traversal", "Parser$IExpressionVisitor$Traversal",
+            "Visit$4", "Parser$IExpressionVisitor$Visit$4",
+            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$3", "Parser$IExpressionVisitor$Visit$3",
+            "Visit$2", "Parser$IExpressionVisitor$Visit$2",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
+            "Visit$5", "Parser$IExpressionVisitor$Visit$5",
+            "Visit", "Parser$IExpressionVisitor$Visit"
         ],
         methods: {
             Visit$4: function (postfixExpression) { },
@@ -761,32 +761,32 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.BadAssignmentException", {
-        inherits: [MathParser.ParserException],
+    Bridge.define("Parser.BadAssignmentException", {
+        inherits: [Parser.ParserException],
         ctors: {
             ctor: function () {
                 this.$initialize();
-                MathParser.ParserException.ctor.call(this);
+                Parser.ParserException.ctor.call(this);
             },
             $ctor1: function (message) {
                 this.$initialize();
-                MathParser.ParserException.$ctor1.call(this, message);
+                Parser.ParserException.$ctor1.call(this, message);
             },
             $ctor2: function (message, innerException) {
                 this.$initialize();
-                MathParser.ParserException.$ctor2.call(this, message, innerException);
+                Parser.ParserException.$ctor2.call(this, message, innerException);
             }
         }
     });
 
-    Bridge.define("MathParser.BinaryExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.BinaryExpression", {
+        inherits: [Parser.IExpression],
         props: {
             BinaryExpressionType: 0,
             LeftOperand: null,
             RightOperand: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (binaryExpressionType, leftOperand, rightOperand) {
                 this.$initialize();
@@ -797,15 +797,15 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit(this);
                 }), [this.LeftOperand, this.RightOperand]);
             }
         }
     });
 
-    Bridge.define("MathParser.BinaryOperatorParselet", {
-        inherits: [MathParser.IInfixParselet],
+    Bridge.define("Parser.BinaryOperatorParselet", {
+        inherits: [Parser.IInfixParselet],
         fields: {
             _binaryExpressionType: 0,
             _associativity: 0
@@ -814,8 +814,8 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Precedence: 0
         },
         alias: [
-            "Parse", "MathParser$IInfixParselet$Parse",
-            "Precedence", "MathParser$IInfixParselet$Precedence"
+            "Parse", "Parser$IInfixParselet$Parse",
+            "Precedence", "Parser$IInfixParselet$Precedence"
         ],
         ctors: {
             ctor: function (binaryExpressionType, precedence, associativity) {
@@ -827,19 +827,19 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Parse: function (parseExpression, tokenStream, leftExpression) {
-                var rightExpression = parseExpression(tokenStream, ((this.Precedence + MathParser.AssociativityExtensions.ToPrecedenceIncrement(this._associativity)) | 0));
-                return new MathParser.BinaryExpression(this._binaryExpressionType, leftExpression, rightExpression);
+                var rightExpression = parseExpression(tokenStream, ((this.Precedence + Parser.AssociativityExtensions.ToPrecedenceIncrement(this._associativity)) | 0));
+                return new Parser.BinaryExpression(this._binaryExpressionType, leftExpression, rightExpression);
             }
         }
     });
 
-    Bridge.define("MathParser.CallExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.CallExpression", {
+        inherits: [Parser.IExpression],
         props: {
             FunctionExpression: null,
             Arguments: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (functionExpression, $arguments) {
                 this.$initialize();
@@ -849,30 +849,30 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                var children = System.Linq.Enumerable.from(System.Array.init([this.FunctionExpression], MathParser.IExpression)).concat(this.Arguments).ToArray(MathParser.IExpression);
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$1(this);
+                var children = System.Linq.Enumerable.from(System.Array.init([this.FunctionExpression], Parser.IExpression)).concat(this.Arguments).ToArray(Parser.IExpression);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$1(this);
                 }), children);
             }
         }
     });
 
-    Bridge.define("MathParser.CallParselet", {
-        inherits: [MathParser.IInfixParselet],
+    Bridge.define("Parser.CallParselet", {
+        inherits: [Parser.IInfixParselet],
         props: {
             Precedence: {
                 get: function () {
-                    return MathParser.Precedences.CALL;
+                    return Parser.Precedences.CALL;
                 }
             }
         },
         alias: [
-            "Parse", "MathParser$IInfixParselet$Parse",
-            "Precedence", "MathParser$IInfixParselet$Precedence"
+            "Parse", "Parser$IInfixParselet$Parse",
+            "Precedence", "Parser$IInfixParselet$Precedence"
         ],
         methods: {
             Parse: function (parseExpression, tokenStream, leftExpression) {
-                var $arguments = new (System.Collections.Generic.List$1(MathParser.IExpression)).ctor();
+                var $arguments = new (System.Collections.Generic.List$1(Parser.IExpression)).ctor();
 
                 if (!tokenStream.Match(Tokenizer.TokenType.RightParenthesis)) {
                     do {
@@ -882,13 +882,13 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
                 }
 
-                return new MathParser.CallExpression(leftExpression, $arguments);
+                return new Parser.CallExpression(leftExpression, $arguments);
             }
         }
     });
 
-    Bridge.define("MathParser.EvaluationVisitor", {
-        inherits: [MathParser.IExpressionVisitor],
+    Bridge.define("Parser.EvaluationVisitor", {
+        inherits: [Parser.IExpressionVisitor],
         fields: {
             _symbolManager: null,
             _evaluationStack: null
@@ -896,28 +896,28 @@ Bridge.assembly("Parser", function ($asm, globals) {
         props: {
             Traversal: {
                 get: function () {
-                    return MathParser.Traversal.None;
+                    return Parser.Traversal.None;
                 }
             }
         },
         alias: [
-            "Traversal", "MathParser$IExpressionVisitor$Traversal",
-            "Visit", "MathParser$IExpressionVisitor$Visit",
-            "Visit$5", "MathParser$IExpressionVisitor$Visit$5",
-            "Visit$7", "MathParser$IExpressionVisitor$Visit$7",
-            "Visit$1", "MathParser$IExpressionVisitor$Visit$1",
-            "Visit$6", "MathParser$IExpressionVisitor$Visit$6",
-            "Visit$9", "MathParser$IExpressionVisitor$Visit$9",
-            "Visit$4", "MathParser$IExpressionVisitor$Visit$4",
-            "Visit$3", "MathParser$IExpressionVisitor$Visit$3",
-            "Visit$8", "MathParser$IExpressionVisitor$Visit$8",
-            "Visit$2", "MathParser$IExpressionVisitor$Visit$2"
+            "Traversal", "Parser$IExpressionVisitor$Traversal",
+            "Visit", "Parser$IExpressionVisitor$Visit",
+            "Visit$5", "Parser$IExpressionVisitor$Visit$5",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
+            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$4", "Parser$IExpressionVisitor$Visit$4",
+            "Visit$3", "Parser$IExpressionVisitor$Visit$3",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$2", "Parser$IExpressionVisitor$Visit$2"
         ],
         ctors: {
             ctor: function (symbolManager) {
                 this.$initialize();
                 this._symbolManager = symbolManager;
-                this._evaluationStack = new (System.Collections.Generic.Stack$1(MathParser.Value)).ctor();
+                this._evaluationStack = new (System.Collections.Generic.Stack$1(Parser.Value)).ctor();
             }
         },
         methods: {
@@ -925,12 +925,12 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 if (this._evaluationStack.Count === 1) {
                     return this._evaluationStack.Pop();
                 } else {
-                    throw new MathParser.EvaluationException.$ctor1("Evaluation stack still contains " + this._evaluationStack.Count + " values. It should contain exactly one value.");
+                    throw new Parser.EvaluationException.$ctor1("Evaluation stack still contains " + this._evaluationStack.Count + " values. It should contain exactly one value.");
                 }
             },
             Visit: function (binaryExpression) {
-                binaryExpression.LeftOperand.MathParser$IExpression$Accept(this);
-                binaryExpression.RightOperand.MathParser$IExpression$Accept(this);
+                binaryExpression.LeftOperand.Parser$IExpression$Accept(this);
+                binaryExpression.RightOperand.Parser$IExpression$Accept(this);
 
                 var rightOperand = this._evaluationStack.Pop();
                 var leftOperand = this._evaluationStack.Pop();
@@ -938,8 +938,8 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 var isNumberRight = rightOperand.IsDecimal || rightOperand.IsInteger;
 
                 switch (binaryExpression.BinaryExpressionType) {
-                    case MathParser.BinaryExpressionType.Addition: 
-                        var result = MathParser.Value.Add(leftOperand, rightOperand);
+                    case Parser.BinaryExpressionType.Addition: 
+                        var result = Parser.Value.Add(leftOperand, rightOperand);
                         this._evaluationStack.Push(result);
                         return;
                 }
@@ -950,53 +950,53 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     var result1;
 
                     switch (binaryExpression.BinaryExpressionType) {
-                        case MathParser.BinaryExpressionType.Substraction: 
-                            result1 = MathParser.Value.Decimal(leftValue - rightValue);
+                        case Parser.BinaryExpressionType.Substraction: 
+                            result1 = Parser.Value.Decimal(leftValue - rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Multiplication: 
-                            result1 = MathParser.Value.Decimal(leftValue * rightValue);
+                        case Parser.BinaryExpressionType.Multiplication: 
+                            result1 = Parser.Value.Decimal(leftValue * rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Division: 
-                            result1 = MathParser.Value.Decimal(leftValue / rightValue);
+                        case Parser.BinaryExpressionType.Division: 
+                            result1 = Parser.Value.Decimal(leftValue / rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Power: 
-                            result1 = MathParser.Value.Decimal(Math.pow(leftValue, rightValue));
+                        case Parser.BinaryExpressionType.Power: 
+                            result1 = Parser.Value.Decimal(Math.pow(leftValue, rightValue));
                             break;
-                        case MathParser.BinaryExpressionType.Modulo: 
-                            result1 = MathParser.Value.Decimal(leftValue % rightValue);
+                        case Parser.BinaryExpressionType.Modulo: 
+                            result1 = Parser.Value.Decimal(leftValue % rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Equal: 
-                            result1 = MathParser.Value.Boolean(leftValue === rightValue);
+                        case Parser.BinaryExpressionType.Equal: 
+                            result1 = Parser.Value.Boolean(leftValue === rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.NotEqual: 
-                            result1 = MathParser.Value.Boolean(leftValue !== rightValue);
+                        case Parser.BinaryExpressionType.NotEqual: 
+                            result1 = Parser.Value.Boolean(leftValue !== rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Less: 
-                            result1 = MathParser.Value.Boolean(leftValue < rightValue);
+                        case Parser.BinaryExpressionType.Less: 
+                            result1 = Parser.Value.Boolean(leftValue < rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.LessOrEqual: 
-                            result1 = MathParser.Value.Boolean(leftValue <= rightValue);
+                        case Parser.BinaryExpressionType.LessOrEqual: 
+                            result1 = Parser.Value.Boolean(leftValue <= rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.Greater: 
-                            result1 = MathParser.Value.Boolean(leftValue > rightValue);
+                        case Parser.BinaryExpressionType.Greater: 
+                            result1 = Parser.Value.Boolean(leftValue > rightValue);
                             break;
-                        case MathParser.BinaryExpressionType.GreaterOrEqual: 
-                            result1 = MathParser.Value.Boolean(leftValue >= rightValue);
+                        case Parser.BinaryExpressionType.GreaterOrEqual: 
+                            result1 = Parser.Value.Boolean(leftValue >= rightValue);
                             break;
                         default: 
-                            var message = System.String.format("Unhandled binary operation {0}.", [Bridge.box(binaryExpression.BinaryExpressionType, MathParser.BinaryExpressionType, System.Enum.toStringFn(MathParser.BinaryExpressionType))]);
-                            throw new MathParser.EvaluationException.$ctor1(message);
+                            var message = System.String.format("Unhandled binary operation {0}.", [Bridge.box(binaryExpression.BinaryExpressionType, Parser.BinaryExpressionType, System.Enum.toStringFn(Parser.BinaryExpressionType))]);
+                            throw new Parser.EvaluationException.$ctor1(message);
                     }
 
                     // TODO integer operations
                     this._evaluationStack.Push(result1);
                 } else {
-                    var message1 = System.String.format("Incompatible types of operands {0} and {1} for binary operation {2}.", leftOperand, rightOperand, Bridge.box(binaryExpression.BinaryExpressionType, MathParser.BinaryExpressionType, System.Enum.toStringFn(MathParser.BinaryExpressionType)));
-                    throw new MathParser.EvaluationException.$ctor1(message1);
+                    var message1 = System.String.format("Incompatible types of operands {0} and {1} for binary operation {2}.", leftOperand, rightOperand, Bridge.box(binaryExpression.BinaryExpressionType, Parser.BinaryExpressionType, System.Enum.toStringFn(Parser.BinaryExpressionType)));
+                    throw new Parser.EvaluationException.$ctor1(message1);
                 }
             },
             Visit$5: function (prefixExpression) {
-                prefixExpression.RightOperand.MathParser$IExpression$Accept(this);
+                prefixExpression.RightOperand.Parser$IExpression$Accept(this);
 
                 var operand = this._evaluationStack.Pop();
 
@@ -1005,36 +1005,36 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     var result;
 
                     switch (prefixExpression.PrefixExpressionType) {
-                        case MathParser.PrefixExpressionType.Negation: 
+                        case Parser.PrefixExpressionType.Negation: 
                             result = -value;
                             break;
                         default: 
-                            var message = System.String.format("Unhandled prefix operation {0}.", [Bridge.box(prefixExpression.PrefixExpressionType, MathParser.PrefixExpressionType, System.Enum.toStringFn(MathParser.PrefixExpressionType))]);
-                            throw new MathParser.EvaluationException.$ctor1(message);
+                            var message = System.String.format("Unhandled prefix operation {0}.", [Bridge.box(prefixExpression.PrefixExpressionType, Parser.PrefixExpressionType, System.Enum.toStringFn(Parser.PrefixExpressionType))]);
+                            throw new Parser.EvaluationException.$ctor1(message);
                     }
 
-                    this._evaluationStack.Push(MathParser.Value.Decimal(result));
+                    this._evaluationStack.Push(Parser.Value.Decimal(result));
                 } else {
-                    var message1 = System.String.format("Unable to execute prefix operation {0} for operand {1}.", Bridge.box(prefixExpression.PrefixExpressionType, MathParser.PrefixExpressionType, System.Enum.toStringFn(MathParser.PrefixExpressionType)), operand);
-                    throw new MathParser.EvaluationException.$ctor1(message1);
+                    var message1 = System.String.format("Unable to execute prefix operation {0} for operand {1}.", Bridge.box(prefixExpression.PrefixExpressionType, Parser.PrefixExpressionType, System.Enum.toStringFn(Parser.PrefixExpressionType)), operand);
+                    throw new Parser.EvaluationException.$ctor1(message1);
                 }
             },
             Visit$7: function (valueExpression) {
                 if (valueExpression.Value.IsExpression) {
-                    valueExpression.Value.ToExpression().Expr.MathParser$IExpression$Accept(this);
+                    valueExpression.Value.ToExpression().Expr.Parser$IExpression$Accept(this);
                 } else {
                     this._evaluationStack.Push(valueExpression.Value);
                 }
             },
             Visit$1: function (functionExpression) {
                 var $t;
-                functionExpression.FunctionExpression.MathParser$IExpression$Accept(this);
+                functionExpression.FunctionExpression.Parser$IExpression$Accept(this);
 
-                $t = Bridge.getEnumerator(functionExpression.Arguments, MathParser.IExpression);
+                $t = Bridge.getEnumerator(functionExpression.Arguments, Parser.IExpression);
                 try {
                     while ($t.moveNext()) {
                         var argument = $t.Current;
-                        argument.MathParser$IExpression$Accept(this);
+                        argument.Parser$IExpression$Accept(this);
                     }
                 } finally {
                     if (Bridge.is($t, System.IDisposable)) {
@@ -1044,7 +1044,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
 
                 var numArguments = System.Linq.Enumerable.from(functionExpression.Arguments).count();
 
-                var $arguments = new (System.Collections.Generic.List$1(MathParser.Value)).ctor();
+                var $arguments = new (System.Collections.Generic.List$1(Parser.Value)).ctor();
 
                 for (var i = 0; i < numArguments; i = (i + 1) | 0) {
                     $arguments.add(this._evaluationStack.Pop());
@@ -1058,42 +1058,42 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     var result = $function.ToFunction()($arguments.ToArray());
                     this._evaluationStack.Push(result);
                 } else {
-                    throw new MathParser.EvaluationException.$ctor1("Invalid function call with " + numArguments + " arguments.");
+                    throw new Parser.EvaluationException.$ctor1("Invalid function call with " + numArguments + " arguments.");
                 }
             },
             Visit$6: function (ternaryExpression) {
-                ternaryExpression.Condition.MathParser$IExpression$Accept(this);
+                ternaryExpression.Condition.Parser$IExpression$Accept(this);
                 var conditionOperand = this._evaluationStack.Pop();
 
                 if (conditionOperand.IsBoolean) {
                     var condition = conditionOperand.ToBoolean();
 
                     if (condition) {
-                        ternaryExpression.TrueCase.MathParser$IExpression$Accept(this);
+                        ternaryExpression.TrueCase.Parser$IExpression$Accept(this);
                     } else {
-                        ternaryExpression.FalseCase.MathParser$IExpression$Accept(this);
+                        ternaryExpression.FalseCase.Parser$IExpression$Accept(this);
                     }
                 } else {
                     var message = System.String.format(System.String.concat("Condition in ternary operation must be boolean, got ", conditionOperand) + " instead.", null);
-                    throw new MathParser.EvaluationException.$ctor1(message);
+                    throw new Parser.EvaluationException.$ctor1(message);
                 }
             },
             Visit$9: function (variableExpression) {
-                if (this._symbolManager != null && this._symbolManager.MathParser$ISymbolManager$IsSet(variableExpression.Identifier)) {
+                if (this._symbolManager != null && this._symbolManager.Parser$ISymbolManager$IsSet(variableExpression.Identifier)) {
                     // TODO decide whether this is good or not , do we want to evaluate like that?!
-                    var value = this._symbolManager.MathParser$ISymbolManager$Get(variableExpression.Identifier);
+                    var value = this._symbolManager.Parser$ISymbolManager$Get(variableExpression.Identifier);
 
                     if (value.IsExpression) {
-                        value.ToExpression().Expr.MathParser$IExpression$Accept(this);
+                        value.ToExpression().Expr.Parser$IExpression$Accept(this);
                     } else {
                         this._evaluationStack.Push(value);
                     }
                 } else {
-                    this._evaluationStack.Push(MathParser.Value.Expression(new MathParser.Expression(variableExpression)));
+                    this._evaluationStack.Push(Parser.Value.Expression(new Parser.Expression(variableExpression)));
                 }
             },
             Visit$4: function (postfixExpression) {
-                postfixExpression.LeftOperand.MathParser$IExpression$Accept(this);
+                postfixExpression.LeftOperand.Parser$IExpression$Accept(this);
 
                 var operand = this._evaluationStack.Pop();
 
@@ -1102,41 +1102,41 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     var result;
 
                     switch (postfixExpression.PostfixExpressionType) {
-                        case MathParser.PostfixExpressionType.Factorial: 
+                        case Parser.PostfixExpressionType.Factorial: 
                             var res = System.Int64(1);
                             var val = value.ToInt64();
                             while (val.ne(System.Int64(1))) {
                                 res = res.mul(val);
                                 val = val.sub(System.Int64(1));
                             }
-                            result = MathParser.Value.Integer(res);
+                            result = Parser.Value.Integer(res);
                             break;
                         default: 
-                            var message = System.String.format("Unhandled postfix operation {0}.", [Bridge.box(postfixExpression.PostfixExpressionType, MathParser.PostfixExpressionType, System.Enum.toStringFn(MathParser.PostfixExpressionType))]);
-                            throw new MathParser.EvaluationException.$ctor1(message);
+                            var message = System.String.format("Unhandled postfix operation {0}.", [Bridge.box(postfixExpression.PostfixExpressionType, Parser.PostfixExpressionType, System.Enum.toStringFn(Parser.PostfixExpressionType))]);
+                            throw new Parser.EvaluationException.$ctor1(message);
                     }
 
                     this._evaluationStack.Push(result);
                 } else {
-                    var message1 = System.String.format("Unable to execute postfix operation {0} for operand {1}.", Bridge.box(postfixExpression.PostfixExpressionType, MathParser.PostfixExpressionType, System.Enum.toStringFn(MathParser.PostfixExpressionType)), operand);
-                    throw new MathParser.EvaluationException.$ctor1(message1);
+                    var message1 = System.String.format("Unable to execute postfix operation {0} for operand {1}.", Bridge.box(postfixExpression.PostfixExpressionType, Parser.PostfixExpressionType, System.Enum.toStringFn(Parser.PostfixExpressionType)), operand);
+                    throw new Parser.EvaluationException.$ctor1(message1);
                 }
             },
             Visit$3: function (groupExpression) {
-                groupExpression.Operand.MathParser$IExpression$Accept(this);
+                groupExpression.Operand.Parser$IExpression$Accept(this);
             },
             Visit$8: function (variableAssignmentExpression) {
-                variableAssignmentExpression.Expression.MathParser$IExpression$Accept(this);
+                variableAssignmentExpression.Expression.Parser$IExpression$Accept(this);
             },
             Visit$2: function (functionAssignmentExpression) {
-                var value = MathParser.AssignVisitor.GetFunction(functionAssignmentExpression, this._symbolManager);
+                var value = Parser.AssignVisitor.GetFunction(functionAssignmentExpression, this._symbolManager);
                 this._evaluationStack.Push(value);
             }
         }
     });
 
-    Bridge.define("MathParser.ExpectedTokenException", {
-        inherits: [MathParser.ParserException],
+    Bridge.define("Parser.ExpectedTokenException", {
+        inherits: [Parser.ParserException],
         props: {
             TokenType: 0,
             Position: 0
@@ -1144,31 +1144,31 @@ Bridge.assembly("Parser", function ($asm, globals) {
         ctors: {
             ctor: function () {
                 this.$initialize();
-                MathParser.ParserException.ctor.call(this);
+                Parser.ParserException.ctor.call(this);
             },
             $ctor1: function (message) {
                 this.$initialize();
-                MathParser.ParserException.$ctor1.call(this, message);
+                Parser.ParserException.$ctor1.call(this, message);
             },
             $ctor2: function (message, innerException) {
                 this.$initialize();
-                MathParser.ParserException.$ctor2.call(this, message, innerException);
+                Parser.ParserException.$ctor2.call(this, message, innerException);
             },
             $ctor3: function (tokenType, position) {
                 this.$initialize();
-                MathParser.ParserException.$ctor1.call(this, "Expected token " + System.Enum.toString(Tokenizer.TokenType, tokenType) + " at position " + position);
+                Parser.ParserException.$ctor1.call(this, "Expected token " + System.Enum.toString(Tokenizer.TokenType, tokenType) + " at position " + position);
                 this.TokenType = tokenType;
                 this.Position = position;
             }
         }
     });
 
-    Bridge.define("MathParser.FixValueParselet", {
-        inherits: [MathParser.IPrefixParselet],
+    Bridge.define("Parser.FixValueParselet", {
+        inherits: [Parser.IPrefixParselet],
         fields: {
             _value: null
         },
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         ctors: {
             ctor: function (value) {
                 this.$initialize();
@@ -1177,30 +1177,30 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
-                return new MathParser.ValueExpression(this._value);
+                return new Parser.ValueExpression(this._value);
             }
         }
     });
 
-    Bridge.define("MathParser.FloatingPointNumberParselet", {
-        inherits: [MathParser.IPrefixParselet],
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+    Bridge.define("Parser.FloatingPointNumberParselet", {
+        inherits: [Parser.IPrefixParselet],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
                 var result = System.Double.parse(token.Content);
-                return new MathParser.ValueExpression(MathParser.Value.Decimal(result));
+                return new Parser.ValueExpression(Parser.Value.Decimal(result));
             }
         }
     });
 
-    Bridge.define("MathParser.FunctionAssignmentExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.FunctionAssignmentExpression", {
+        inherits: [Parser.IExpression],
         props: {
             FunctionIdentifier: null,
             ArgumentNames: null,
             Expression: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (functionIdentifier, $arguments, expression) {
                 this.$initialize();
@@ -1211,19 +1211,19 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$2(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$2(this);
                 }), [this.Expression]);
             }
         }
     });
 
-    Bridge.define("MathParser.GroupExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.GroupExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Operand: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (operand) {
                 this.$initialize();
@@ -1232,43 +1232,43 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$3(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$3(this);
                 }), [this.Operand]);
             }
         }
     });
 
-    Bridge.define("MathParser.GroupParselet", {
-        inherits: [MathParser.IPrefixParselet],
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+    Bridge.define("Parser.GroupParselet", {
+        inherits: [Parser.IPrefixParselet],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
                 var expression = parseExpression(tokenStream, 0);
                 tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
-                return new MathParser.GroupExpression(expression);
+                return new Parser.GroupExpression(expression);
             }
         }
     });
 
-    Bridge.define("MathParser.IntegerParselet", {
-        inherits: [MathParser.IPrefixParselet],
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+    Bridge.define("Parser.IntegerParselet", {
+        inherits: [Parser.IPrefixParselet],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
                 var result = System.Int64.parse(token.Content);
-                return new MathParser.ValueExpression(MathParser.Value.Integer(result));
+                return new Parser.ValueExpression(Parser.Value.Integer(result));
             }
         }
     });
 
-    Bridge.define("MathParser.PostfixExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.PostfixExpression", {
+        inherits: [Parser.IExpression],
         props: {
             PostfixExpressionType: 0,
             LeftOperand: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (postfixExpressionType, leftOperand) {
                 this.$initialize();
@@ -1278,15 +1278,15 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$4(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$4(this);
                 }), [this.LeftOperand]);
             }
         }
     });
 
-    Bridge.define("MathParser.PostfixOperatorParselet", {
-        inherits: [MathParser.IInfixParselet],
+    Bridge.define("Parser.PostfixOperatorParselet", {
+        inherits: [Parser.IInfixParselet],
         fields: {
             _postfixExpressionType: 0
         },
@@ -1294,8 +1294,8 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Precedence: 0
         },
         alias: [
-            "Parse", "MathParser$IInfixParselet$Parse",
-            "Precedence", "MathParser$IInfixParselet$Precedence"
+            "Parse", "Parser$IInfixParselet$Parse",
+            "Precedence", "Parser$IInfixParselet$Precedence"
         ],
         ctors: {
             ctor: function (postfixExpressionType, precedence) {
@@ -1306,18 +1306,18 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Parse: function (parseExpression, tokenStream, leftExpression) {
-                return new MathParser.PostfixExpression(this._postfixExpressionType, leftExpression);
+                return new Parser.PostfixExpression(this._postfixExpressionType, leftExpression);
             }
         }
     });
 
-    Bridge.define("MathParser.PrefixExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.PrefixExpression", {
+        inherits: [Parser.IExpression],
         props: {
             PrefixExpressionType: 0,
             RightOperand: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (prefixExpressionType, rightOperand) {
                 this.$initialize();
@@ -1327,20 +1327,20 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$5(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$5(this);
                 }), [this.RightOperand]);
             }
         }
     });
 
-    Bridge.define("MathParser.PrefixOperatorParselet", {
-        inherits: [MathParser.IPrefixParselet],
+    Bridge.define("Parser.PrefixOperatorParselet", {
+        inherits: [Parser.IPrefixParselet],
         fields: {
             _prefixExpressionType: 0,
             _precedence: 0
         },
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         ctors: {
             ctor: function (prefixExpressionType, precedence) {
                 this.$initialize();
@@ -1351,17 +1351,17 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
                 var operand = parseExpression(tokenStream, this._precedence);
-                return new MathParser.PrefixExpression(this._prefixExpressionType, operand);
+                return new Parser.PrefixExpression(this._prefixExpressionType, operand);
             }
         }
     });
 
-    Bridge.define("MathParser.SymbolicExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.SymbolicExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Operand: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (operand) {
                 this.$initialize();
@@ -1376,19 +1376,19 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.SymbolManager", {
-        inherits: [MathParser.ISymbolManager],
+    Bridge.define("Parser.SymbolManager", {
+        inherits: [Parser.ISymbolManager],
         fields: {
             _symbols: null
         },
         alias: [
-            "IsSet", "MathParser$ISymbolManager$IsSet",
-            "Get", "MathParser$ISymbolManager$Get",
-            "Set", "MathParser$ISymbolManager$Set"
+            "IsSet", "Parser$ISymbolManager$IsSet",
+            "Get", "Parser$ISymbolManager$Get",
+            "Set", "Parser$ISymbolManager$Set"
         ],
         ctors: {
             init: function () {
-                this._symbols = new (System.Collections.Generic.Dictionary$2(MathParser.Identifier,MathParser.Value))();
+                this._symbols = new (System.Collections.Generic.Dictionary$2(Parser.Identifier,Parser.Value))();
             }
         },
         methods: {
@@ -1404,14 +1404,14 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("MathParser.TernaryExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.TernaryExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Condition: null,
             TrueCase: null,
             FalseCase: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (condition, trueCase, falseCase) {
                 this.$initialize();
@@ -1422,60 +1422,60 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$6(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$6(this);
                 }), [this.Condition, this.TrueCase, this.FalseCase]);
             }
         }
     });
 
-    Bridge.define("MathParser.TernaryParselet", {
-        inherits: [MathParser.IInfixParselet],
+    Bridge.define("Parser.TernaryParselet", {
+        inherits: [Parser.IInfixParselet],
         props: {
             Precedence: {
                 get: function () {
-                    return MathParser.Precedences.CONDITIONAL;
+                    return Parser.Precedences.CONDITIONAL;
                 }
             }
         },
         alias: [
-            "Parse", "MathParser$IInfixParselet$Parse",
-            "Precedence", "MathParser$IInfixParselet$Precedence"
+            "Parse", "Parser$IInfixParselet$Parse",
+            "Precedence", "Parser$IInfixParselet$Precedence"
         ],
         methods: {
             Parse: function (parseExpression, tokenStream, leftExpression) {
                 var trueExpression = parseExpression(tokenStream, 0);
                 tokenStream.Consume$1(Tokenizer.TokenType.Colon);
-                var falseExpression = parseExpression(tokenStream, ((MathParser.Precedences.CONDITIONAL + MathParser.AssociativityExtensions.ToPrecedenceIncrement(MathParser.Associativity.Right)) | 0));
-                return new MathParser.TernaryExpression(leftExpression, trueExpression, falseExpression);
+                var falseExpression = parseExpression(tokenStream, ((Parser.Precedences.CONDITIONAL + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
+                return new Parser.TernaryExpression(leftExpression, trueExpression, falseExpression);
             }
         }
     });
 
-    Bridge.define("MathParser.UnknownVariableException", {
-        inherits: [MathParser.ParserException],
+    Bridge.define("Parser.UnknownVariableException", {
+        inherits: [Parser.ParserException],
         ctors: {
             ctor: function () {
                 this.$initialize();
-                MathParser.ParserException.ctor.call(this);
+                Parser.ParserException.ctor.call(this);
             },
             $ctor1: function (message) {
                 this.$initialize();
-                MathParser.ParserException.$ctor1.call(this, message);
+                Parser.ParserException.$ctor1.call(this, message);
             },
             $ctor2: function (message, innerException) {
                 this.$initialize();
-                MathParser.ParserException.$ctor2.call(this, message, innerException);
+                Parser.ParserException.$ctor2.call(this, message, innerException);
             }
         }
     });
 
-    Bridge.define("MathParser.ValueExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.ValueExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Value: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (value) {
                 this.$initialize();
@@ -1485,25 +1485,25 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Accept: function (visitor) {
                 if (this.Value.IsExpression) {
-                    MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                        visitor.MathParser$IExpressionVisitor$Visit$7(this);
+                    Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                        visitor.Parser$IExpressionVisitor$Visit$7(this);
                     }), [this.Value.ToExpression().Expr]);
                 } else {
-                    MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                        visitor.MathParser$IExpressionVisitor$Visit$7(this);
+                    Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                        visitor.Parser$IExpressionVisitor$Visit$7(this);
                     }));
                 }
             }
         }
     });
 
-    Bridge.define("MathParser.VariableAssignmentExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.VariableAssignmentExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Identifier: null,
             Expression: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (identifier, expression) {
                 this.$initialize();
@@ -1513,19 +1513,19 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$8(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$8(this);
                 }), [this.Expression]);
             }
         }
     });
 
-    Bridge.define("MathParser.VariableExpression", {
-        inherits: [MathParser.IExpression],
+    Bridge.define("Parser.VariableExpression", {
+        inherits: [Parser.IExpression],
         props: {
             Identifier: null
         },
-        alias: ["Accept", "MathParser$IExpression$Accept"],
+        alias: ["Accept", "Parser$IExpression$Accept"],
         ctors: {
             ctor: function (identifier) {
                 this.$initialize();
@@ -1534,31 +1534,31 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         methods: {
             Accept: function (visitor) {
-                MathParser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.MathParser$IExpressionVisitor$Visit$9(this);
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$9(this);
                 }));
             }
         }
     });
 
-    Bridge.define("MathParser.VariableParselet", {
-        inherits: [MathParser.IPrefixParselet],
-        alias: ["Parse", "MathParser$IPrefixParselet$Parse"],
+    Bridge.define("Parser.VariableParselet", {
+        inherits: [Parser.IPrefixParselet],
+        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
         methods: {
             Parse: function (parseExpression, tokenStream, token) {
-                return new MathParser.VariableExpression(MathParser.Identifier.op_Implicit(token.Content));
+                return new Parser.VariableExpression(Parser.Identifier.op_Implicit(token.Content));
             }
         }
     });
 
-    Bridge.define("MathParser.AssignVisitor", {
-        inherits: [MathParser.BottomUpExpressionVisitor],
+    Bridge.define("Parser.AssignVisitor", {
+        inherits: [Parser.BottomUpExpressionVisitor],
         statics: {
             methods: {
                 GetFunction: function (functionAssignmentExpression, symbolManager) {
-                    return MathParser.Value.Function(function (args) {
-                        var fExpEvaluationVisitor = new MathParser.FunctionExpressionVisitor(functionAssignmentExpression.ArgumentNames, args, symbolManager);
-                        functionAssignmentExpression.Expression.MathParser$IExpression$Accept(fExpEvaluationVisitor);
+                    return Parser.Value.Function(function (args) {
+                        var fExpEvaluationVisitor = new Parser.FunctionExpressionVisitor(functionAssignmentExpression.ArgumentNames, args, symbolManager);
+                        functionAssignmentExpression.Expression.Parser$IExpression$Accept(fExpEvaluationVisitor);
                         return fExpEvaluationVisitor.GetResult();
                     });
                 }
@@ -1568,40 +1568,40 @@ Bridge.assembly("Parser", function ($asm, globals) {
             _symbolManager: null
         },
         alias: [
-            "Visit$8", "MathParser$IExpressionVisitor$Visit$8",
-            "Visit$2", "MathParser$IExpressionVisitor$Visit$2"
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$2", "Parser$IExpressionVisitor$Visit$2"
         ],
         ctors: {
             ctor: function (symbolManager) {
                 this.$initialize();
-                MathParser.BottomUpExpressionVisitor.ctor.call(this);
+                Parser.BottomUpExpressionVisitor.ctor.call(this);
                 this._symbolManager = symbolManager;
             }
         },
         methods: {
             Visit$8: function (variableAssignmentExpression) {
-                var evaluationVisitor = new MathParser.EvaluationVisitor(this._symbolManager);
-                variableAssignmentExpression.Expression.MathParser$IExpression$Accept(evaluationVisitor);
+                var evaluationVisitor = new Parser.EvaluationVisitor(this._symbolManager);
+                variableAssignmentExpression.Expression.Parser$IExpression$Accept(evaluationVisitor);
 
-                this._symbolManager.MathParser$ISymbolManager$Set(variableAssignmentExpression.Identifier, evaluationVisitor.GetResult());
+                this._symbolManager.Parser$ISymbolManager$Set(variableAssignmentExpression.Identifier, evaluationVisitor.GetResult());
             },
             Visit$2: function (functionAssignmentExpression) {
-                this._symbolManager.MathParser$ISymbolManager$Set(functionAssignmentExpression.FunctionIdentifier, MathParser.AssignVisitor.GetFunction(functionAssignmentExpression, this._symbolManager));
+                this._symbolManager.Parser$ISymbolManager$Set(functionAssignmentExpression.FunctionIdentifier, Parser.AssignVisitor.GetFunction(functionAssignmentExpression, this._symbolManager));
             }
         }
     });
 
-    Bridge.define("MathParser.FunctionExpressionVisitor", {
-        inherits: [MathParser.EvaluationVisitor],
+    Bridge.define("Parser.FunctionExpressionVisitor", {
+        inherits: [Parser.EvaluationVisitor],
         fields: {
             argNames: null,
             arguments: null
         },
-        alias: ["Visit$9", "MathParser$IExpressionVisitor$Visit$9"],
+        alias: ["Visit$9", "Parser$IExpressionVisitor$Visit$9"],
         ctors: {
             ctor: function (argNames, $arguments, symbolProvider) {
                 this.$initialize();
-                MathParser.EvaluationVisitor.ctor.call(this, symbolProvider);
+                Parser.EvaluationVisitor.ctor.call(this, symbolProvider);
                 this.argNames = argNames;
                 this.arguments = $arguments;
             }
@@ -1609,29 +1609,29 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Visit$9: function (variableExpression) {
                 if (System.Linq.Enumerable.from(this.argNames).contains(variableExpression.Identifier)) {
-                    var idx = System.Linq.Enumerable.from(this.argNames).toList(MathParser.Identifier).indexOf(variableExpression.Identifier);
+                    var idx = System.Linq.Enumerable.from(this.argNames).toList(Parser.Identifier).indexOf(variableExpression.Identifier);
                     this._evaluationStack.Push(this.arguments[System.Array.index(idx, this.arguments)]);
                 } else {
-                    MathParser.EvaluationVisitor.prototype.Visit$9.call(this, variableExpression);
+                    Parser.EvaluationVisitor.prototype.Visit$9.call(this, variableExpression);
                 }
             }
         }
     });
 
-    Bridge.define("MathParser.GraphvizVisitor", {
-        inherits: [MathParser.BottomUpExpressionVisitor],
+    Bridge.define("Parser.GraphvizVisitor", {
+        inherits: [Parser.BottomUpExpressionVisitor],
         fields: {
             stringBuilder: null,
             id: 0,
             idStack: null
         },
         alias: [
-            "Visit$1", "MathParser$IExpressionVisitor$Visit$1",
-            "Visit$6", "MathParser$IExpressionVisitor$Visit$6",
-            "Visit", "MathParser$IExpressionVisitor$Visit",
-            "Visit$7", "MathParser$IExpressionVisitor$Visit$7",
-            "Visit$9", "MathParser$IExpressionVisitor$Visit$9",
-            "Visit$5", "MathParser$IExpressionVisitor$Visit$5"
+            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit", "Parser$IExpressionVisitor$Visit",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
+            "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$5", "Parser$IExpressionVisitor$Visit$5"
         ],
         ctors: {
             init: function () {
@@ -1648,22 +1648,22 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 this.consume("Ternary", 3);
             },
             Visit: function (binaryExpression) {
-                this.consume(System.Enum.toString(MathParser.BinaryExpressionType, binaryExpression.BinaryExpressionType), 2);
+                this.consume(System.Enum.toString(Parser.BinaryExpressionType, binaryExpression.BinaryExpressionType), 2);
             },
             Visit$7: function (valueExpression) {
                 this.consume(valueExpression.Value.toString(), 0);
             },
             Visit$9: function (variableExpression) {
-                this.consume(MathParser.Identifier.op_Implicit$1(variableExpression.Identifier), 0);
+                this.consume(Parser.Identifier.op_Implicit$1(variableExpression.Identifier), 0);
             },
             Visit$5: function (prefixExpression) {
-                this.consume(System.Enum.toString(MathParser.PrefixExpressionType, prefixExpression.PrefixExpressionType), 1);
+                this.consume(System.Enum.toString(Parser.PrefixExpressionType, prefixExpression.PrefixExpressionType), 1);
             },
             consume: function (nodeName, count) {
                 var $t;
                 this.stringBuilder.appendLine(System.String.format("node{0} [ label = \"{1}\" ];", Bridge.box(this.id, System.Int32), nodeName));
 
-                var childIds = System.Linq.Enumerable.range(0, count).select(Bridge.fn.bind(this, $asm.$.MathParser.GraphvizVisitor.f1)).reverse();
+                var childIds = System.Linq.Enumerable.range(0, count).select(Bridge.fn.bind(this, $asm.$.Parser.GraphvizVisitor.f1)).reverse();
                 $t = Bridge.getEnumerator(childIds, System.Int32);
                 try {
                     while ($t.moveNext()) {
@@ -1684,29 +1684,29 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.ns("MathParser.GraphvizVisitor", $asm.$);
+    Bridge.ns("Parser.GraphvizVisitor", $asm.$);
 
-    Bridge.apply($asm.$.MathParser.GraphvizVisitor, {
+    Bridge.apply($asm.$.Parser.GraphvizVisitor, {
         f1: function (x) {
             return this.idStack.Pop();
         }
     });
 
-    Bridge.define("MathParser.PrintVisitor", {
-        inherits: [MathParser.BottomUpExpressionVisitor],
+    Bridge.define("Parser.PrintVisitor", {
+        inherits: [Parser.BottomUpExpressionVisitor],
         fields: {
             _stack: null
         },
         alias: [
-            "Visit", "MathParser$IExpressionVisitor$Visit",
-            "Visit$7", "MathParser$IExpressionVisitor$Visit$7",
-            "Visit$6", "MathParser$IExpressionVisitor$Visit$6",
-            "Visit$9", "MathParser$IExpressionVisitor$Visit$9",
-            "Visit$5", "MathParser$IExpressionVisitor$Visit$5",
-            "Visit$4", "MathParser$IExpressionVisitor$Visit$4",
-            "Visit$1", "MathParser$IExpressionVisitor$Visit$1",
-            "Visit$8", "MathParser$IExpressionVisitor$Visit$8",
-            "Visit$2", "MathParser$IExpressionVisitor$Visit$2"
+            "Visit", "Parser$IExpressionVisitor$Visit",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$5", "Parser$IExpressionVisitor$Visit$5",
+            "Visit$4", "Parser$IExpressionVisitor$Visit$4",
+            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$2", "Parser$IExpressionVisitor$Visit$2"
         ],
         ctors: {
             init: function () {
@@ -1719,46 +1719,46 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     return this._stack.Pop();
                 } else {
                     var message = System.String.format("Stack contains {0} values. It should contain exactly one value.", [Bridge.box(this._stack.Count, System.Int32)]);
-                    throw new MathParser.EvaluationException.$ctor1(message);
+                    throw new Parser.EvaluationException.$ctor1(message);
                 }
             },
             Visit: function (binaryExpression) {
                 var infix;
                 switch (binaryExpression.BinaryExpressionType) {
-                    case MathParser.BinaryExpressionType.Addition: 
+                    case Parser.BinaryExpressionType.Addition: 
                         infix = "+";
                         break;
-                    case MathParser.BinaryExpressionType.Division: 
+                    case Parser.BinaryExpressionType.Division: 
                         infix = "/";
                         break;
-                    case MathParser.BinaryExpressionType.Multiplication: 
+                    case Parser.BinaryExpressionType.Multiplication: 
                         infix = "*";
                         break;
-                    case MathParser.BinaryExpressionType.Power: 
+                    case Parser.BinaryExpressionType.Power: 
                         infix = "^";
                         break;
-                    case MathParser.BinaryExpressionType.Substraction: 
+                    case Parser.BinaryExpressionType.Substraction: 
                         infix = "-";
                         break;
-                    case MathParser.BinaryExpressionType.Modulo: 
+                    case Parser.BinaryExpressionType.Modulo: 
                         infix = "%";
                         break;
-                    case MathParser.BinaryExpressionType.Equal: 
+                    case Parser.BinaryExpressionType.Equal: 
                         infix = "==";
                         break;
-                    case MathParser.BinaryExpressionType.NotEqual: 
+                    case Parser.BinaryExpressionType.NotEqual: 
                         infix = "!=";
                         break;
-                    case MathParser.BinaryExpressionType.Less: 
+                    case Parser.BinaryExpressionType.Less: 
                         infix = "<";
                         break;
-                    case MathParser.BinaryExpressionType.LessOrEqual: 
+                    case Parser.BinaryExpressionType.LessOrEqual: 
                         infix = "<=";
                         break;
-                    case MathParser.BinaryExpressionType.Greater: 
+                    case Parser.BinaryExpressionType.Greater: 
                         infix = ">";
                         break;
-                    case MathParser.BinaryExpressionType.GreaterOrEqual: 
+                    case Parser.BinaryExpressionType.GreaterOrEqual: 
                         infix = ">=";
                         break;
                     default: 
@@ -1782,15 +1782,15 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 this._stack.Push("{" + (condition || "") + " ? " + (trueCase || "") + " : " + (falseCase || "") + "}");
             },
             Visit$9: function (variableExpression) {
-                this._stack.Push(MathParser.Identifier.op_Implicit$1(variableExpression.Identifier));
+                this._stack.Push(Parser.Identifier.op_Implicit$1(variableExpression.Identifier));
             },
             Visit$5: function (prefixExpression) {
                 var prefix;
                 switch (prefixExpression.PrefixExpressionType) {
-                    case MathParser.PrefixExpressionType.Negation: 
+                    case Parser.PrefixExpressionType.Negation: 
                         prefix = "-";
                         break;
-                    case MathParser.PrefixExpressionType.Positive: 
+                    case Parser.PrefixExpressionType.Positive: 
                         prefix = "+";
                         break;
                     default: 
@@ -1804,7 +1804,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Visit$4: function (postfixExpression) {
                 var postfix;
                 switch (postfixExpression.PostfixExpressionType) {
-                    case MathParser.PostfixExpressionType.Factorial: 
+                    case Parser.PostfixExpressionType.Factorial: 
                         postfix = "!";
                         break;
                     default: 
@@ -1816,22 +1816,22 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 this._stack.Push(output);
             },
             Visit$1: function (functionExpression) {
-                var args = Bridge.toArray(System.Linq.Enumerable.from(functionExpression.Arguments).select(Bridge.fn.bind(this, $asm.$.MathParser.PrintVisitor.f1)).reverse()).join(",");
+                var args = Bridge.toArray(System.Linq.Enumerable.from(functionExpression.Arguments).select(Bridge.fn.bind(this, $asm.$.Parser.PrintVisitor.f1)).reverse()).join(",");
                 var functionName = this._stack.Pop();
                 this._stack.Push((functionName || "") + "(" + (args || "") + ")");
             },
             Visit$8: function (variableAssignmentExpression) {
-                this._stack.Push(System.String.concat("(", MathParser.Identifier.op_Implicit$1(variableAssignmentExpression.Identifier)) + " = " + (this._stack.Pop() || "") + ")");
+                this._stack.Push(System.String.concat("(", Parser.Identifier.op_Implicit$1(variableAssignmentExpression.Identifier)) + " = " + (this._stack.Pop() || "") + ")");
             },
             Visit$2: function (functionAssignmentExpression) {
-                this._stack.Push(System.String.concat("(", MathParser.Identifier.op_Implicit$1(functionAssignmentExpression.FunctionIdentifier)) + "(" + (Bridge.toArray(functionAssignmentExpression.ArgumentNames).join(", ") || "") + ")" + " = " + (this._stack.Pop() || "") + ")");
+                this._stack.Push(System.String.concat("(", Parser.Identifier.op_Implicit$1(functionAssignmentExpression.FunctionIdentifier)) + "(" + (Bridge.toArray(functionAssignmentExpression.ArgumentNames).join(", ") || "") + ")" + " = " + (this._stack.Pop() || "") + ")");
             }
         }
     });
 
-    Bridge.ns("MathParser.PrintVisitor", $asm.$);
+    Bridge.ns("Parser.PrintVisitor", $asm.$);
 
-    Bridge.apply($asm.$.MathParser.PrintVisitor, {
+    Bridge.apply($asm.$.Parser.PrintVisitor, {
         f1: function (arg) {
             return this._stack.Pop();
         }
