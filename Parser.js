@@ -168,53 +168,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
     });
 
     Bridge.define("Parser.ExpressionParser", {
-        statics: {
-            fields: {
-                _prefixParselets: null,
-                _infixParselets: null
-            },
-            ctors: {
-                init: function () {
-                    this._prefixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IPrefixParselet))();
-                    this._infixParselets = new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IInfixParselet))();
-                },
-                ctor: function () {
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Identifier, new Parser.VariableParselet());
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Decimal, new Parser.FloatingPointNumberParselet());
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Integer, new Parser.IntegerParselet());
-                    //registerPrefixParselet(TokenType.False, new FixValueParselet(Value.Boolean(false)));
-                    //registerPrefixParselet(TokenType.True, new FixValueParselet(Value.Boolean(true)));
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.LeftParenthesis, new Parser.GroupParselet());
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Minus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Negation, Parser.Precedences.PREFIX));
-                    Parser.ExpressionParser.registerPrefixParselet(Tokenizer.TokenType.Plus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Positive, Parser.Precedences.PREFIX));
-
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Exclamation, new Parser.PostfixOperatorParselet(Parser.PostfixExpressionType.Factorial, Parser.Precedences.POSTFIX));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Assignment, new Parser.AssignParselet());
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Equal, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Equal, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.NotEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.NotEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Less, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Less, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Greater, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Greater, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LessOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.LessOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.GreaterOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.GreaterOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.QuestionMark, new Parser.TernaryParselet());
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.LeftParenthesis, new Parser.CallParselet());
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Plus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Addition, Parser.Precedences.SUM, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Minus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Substraction, Parser.Precedences.SUM, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Star, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Multiplication, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Slash, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Division, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Pow, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Power, Parser.Precedences.EXPONENT, Parser.Associativity.Right));
-                    Parser.ExpressionParser.registerInfixParselet(Tokenizer.TokenType.Percent, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Modulo, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
-                }
-            },
-            methods: {
-                registerPrefixParselet: function (tokenType, prefixParselet) {
-                    Parser.ExpressionParser._prefixParselets.add(tokenType, prefixParselet);
-                },
-                registerInfixParselet: function (tokenType, infixParselet) {
-                    Parser.ExpressionParser._infixParselets.add(tokenType, infixParselet);
-                }
-            }
-        },
         methods: {
             Parse: function (tokenStream) {
                 return this.ParseExpression(tokenStream, Parser.Precedences.EXPRESSION);
@@ -223,17 +176,17 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 var token = tokenStream.Consume();
 
                 var prefixParselet = { };
-                if (!Parser.ExpressionParser._prefixParselets.tryGetValue(token.TokenType, prefixParselet)) {
+                if (!Parser.ParserSpecification.Prefix.tryGetValue(token.TokenType, prefixParselet)) {
                     // TODO better exception
                     throw new System.ArgumentException.$ctor1("Could not parse \"" + (token.Content || "") + "\".");
                 }
+
                 var leftExpression = prefixParselet.v.Parser$IPrefixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
 
                 var infixParselet = { };
 
-                while (Parser.ExpressionParser._infixParselets.tryGetValue(tokenStream.Peek().TokenType, infixParselet) && precedence < infixParselet.v.Parser$IInfixParselet$Precedence) {
+                while (Parser.ParserSpecification.Infix.tryGetValue(tokenStream.Peek().TokenType, infixParselet) && precedence < infixParselet.v.Parser$IInfixParselet$Precedence) {
                     tokenStream.Consume();
-
                     leftExpression = infixParselet.v.Parser$IInfixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
                 }
 
@@ -363,6 +316,54 @@ Bridge.assembly("Parser", function ($asm, globals) {
     Bridge.apply($asm.$.Parser.MathParser, {
         f1: function (token) {
             return token.TokenType !== Tokenizer.TokenType.WhiteSpace;
+        }
+    });
+
+    Bridge.define("Parser.ParserSpecification", {
+        statics: {
+            fields: {
+                Prefix: null,
+                Infix: null
+            },
+            ctors: {
+                init: function () {
+                    this.Prefix = $asm.$.Parser.ParserSpecification.f1(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IPrefixParselet))());
+                    this.Infix = $asm.$.Parser.ParserSpecification.f2(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IInfixParselet))());
+                }
+            }
+        }
+    });
+
+    Bridge.ns("Parser.ParserSpecification", $asm.$);
+
+    Bridge.apply($asm.$.Parser.ParserSpecification, {
+        f1: function (_o1) {
+            _o1.add(Tokenizer.TokenType.Identifier, new Parser.VariableParselet());
+            _o1.add(Tokenizer.TokenType.Decimal, new Parser.FloatingPointNumberParselet());
+            _o1.add(Tokenizer.TokenType.Integer, new Parser.IntegerParselet());
+            _o1.add(Tokenizer.TokenType.LeftParenthesis, new Parser.GroupParselet());
+            _o1.add(Tokenizer.TokenType.Minus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Negation, Parser.Precedences.PREFIX));
+            _o1.add(Tokenizer.TokenType.Plus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Positive, Parser.Precedences.PREFIX));
+            return _o1;
+        },
+        f2: function (_o2) {
+            _o2.add(Tokenizer.TokenType.Exclamation, new Parser.PostfixOperatorParselet(Parser.PostfixExpressionType.Factorial, Parser.Precedences.POSTFIX));
+            _o2.add(Tokenizer.TokenType.Assignment, new Parser.AssignParselet());
+            _o2.add(Tokenizer.TokenType.Equal, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Equal, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.NotEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.NotEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Less, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Less, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Greater, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Greater, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.LessOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.LessOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.GreaterOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.GreaterOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.QuestionMark, new Parser.TernaryParselet());
+            _o2.add(Tokenizer.TokenType.LeftParenthesis, new Parser.CallParselet());
+            _o2.add(Tokenizer.TokenType.Plus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Addition, Parser.Precedences.SUM, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Minus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Substraction, Parser.Precedences.SUM, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Star, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Multiplication, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Slash, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Division, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Pow, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Power, Parser.Precedences.EXPONENT, Parser.Associativity.Right));
+            _o2.add(Tokenizer.TokenType.Percent, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Modulo, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            return _o2;
         }
     });
 
