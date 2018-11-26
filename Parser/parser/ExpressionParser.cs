@@ -66,31 +66,12 @@ namespace Parser
 			}
 			IExpression leftExpression = prefixParselet.Parse(ParseExpression, tokenStream, token);
 
-			while (true)
-			{
-				IInfixParselet infixParselet;
-				bool isInfix = _infixParselets.TryGetValue(tokenStream.Peek().TokenType, out infixParselet);
-				if (!isInfix)
-				{
-					if (_prefixParselets.ContainsKey(tokenStream.Peek().TokenType))
-					{
-						infixParselet = _infixParselets[TokenType.Star];
-					}
-					else
-					{
-						break;
-					}
-				}
+			IInfixParselet infixParselet;
 
-				if (precedence >= infixParselet.Precedence)
-				{
-					break;
-				}
-				// todo handle juxtaposition multiplication for constants with brackets
-				if (isInfix)
-				{
-					tokenStream.Consume();
-				}
+			while (_infixParselets.TryGetValue(tokenStream.Peek().TokenType, out infixParselet)
+				&& precedence < infixParselet.Precedence)
+			{
+				tokenStream.Consume();
 
 				leftExpression = infixParselet.Parse(ParseExpression, tokenStream, leftExpression);
 			}
