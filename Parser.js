@@ -229,24 +229,10 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 }
                 var leftExpression = prefixParselet.v.Parser$IPrefixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
 
-                while (true) {
-                    var infixParselet = { };
-                    var isInfix = Parser.ExpressionParser._infixParselets.tryGetValue(tokenStream.Peek().TokenType, infixParselet);
-                    if (!isInfix) {
-                        if (Parser.ExpressionParser._prefixParselets.containsKey(tokenStream.Peek().TokenType)) {
-                            infixParselet.v = Parser.ExpressionParser._infixParselets.get(Tokenizer.TokenType.Star);
-                        } else {
-                            break;
-                        }
-                    }
+                var infixParselet = { };
 
-                    if (precedence >= infixParselet.v.Parser$IInfixParselet$Precedence) {
-                        break;
-                    }
-                    // todo handle juxtaposition multiplication for constants with brackets
-                    if (isInfix) {
-                        tokenStream.Consume();
-                    }
+                while (Parser.ExpressionParser._infixParselets.tryGetValue(tokenStream.Peek().TokenType, infixParselet) && precedence < infixParselet.v.Parser$IInfixParselet$Precedence) {
+                    tokenStream.Consume();
 
                     leftExpression = infixParselet.v.Parser$IInfixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
                 }
