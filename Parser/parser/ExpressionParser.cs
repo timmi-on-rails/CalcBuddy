@@ -14,23 +14,23 @@ namespace Parser
 		{
 			Token token = tokenStream.Consume();
 
-			IPrefixParselet prefixParselet;
-			if (!ParserSpecification.Prefix.TryGetValue(token.TokenType, out prefixParselet))
+			ParsePrefixDelegate parsePrefix;
+			if (!ParserSpecification.Prefix.TryGetValue(token.TokenType, out parsePrefix))
 			{
 				// TODO better exception
-				throw new ArgumentException(
-					"Could not parse \"" + token.Content + "\".");
+				throw new ArgumentException("Could not parse \"" + token.Content + "\".");
 			}
 
-			IExpression leftExpression = prefixParselet.Parse(ParseExpression, tokenStream, token);
+			// Do not inline declaration to out parameter ... bug https://github.com/bridgedotnet/Bridge/issues/3786
+			IExpression leftExpression = parsePrefix(ParseExpression, tokenStream, token);
 
-			IInfixParselet infixParselet;
+			(int precedence, ParseInfixDelegate parse) infix;
 
-			while (ParserSpecification.Infix.TryGetValue(tokenStream.Peek().TokenType, out infixParselet)
-				&& precedence < infixParselet.Precedence)
+			while (ParserSpecification.Infix.TryGetValue(tokenStream.Peek().TokenType, out infix)
+				&& precedence < infix.precedence)
 			{
 				tokenStream.Consume();
-				leftExpression = infixParselet.Parse(ParseExpression, tokenStream, leftExpression);
+				leftExpression = infix.parse(ParseExpression, tokenStream, leftExpression);
 			}
 
 			return leftExpression;
