@@ -6,10 +6,6 @@
 Bridge.assembly("Parser", function ($asm, globals) {
     "use strict";
 
-    Bridge.define("Parser.IInfixParselet", {
-        $kind: "interface"
-    });
-
     Bridge.define("Parser.IExpressionVisitor", {
         $kind: "interface"
     });
@@ -175,19 +171,20 @@ Bridge.assembly("Parser", function ($asm, globals) {
             ParseExpression: function (tokenStream, precedence) {
                 var token = tokenStream.Consume();
 
-                var prefixParselet = { };
-                if (!Parser.ParserSpecification.Prefix.tryGetValue(token.TokenType, prefixParselet)) {
+                var parsePrefix = { };
+                if (!Parser.ParserSpecification.Prefix.tryGetValue(token.TokenType, parsePrefix)) {
                     // TODO better exception
                     throw new System.ArgumentException.$ctor1("Could not parse \"" + (token.Content || "") + "\".");
                 }
 
-                var leftExpression = prefixParselet.v.Parser$IPrefixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
+                // Do not inline declaration to out parameter ... bug https://github.com/bridgedotnet/Bridge/issues/3786
+                var leftExpression = parsePrefix.v(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, token);
 
-                var infixParselet = { };
+                var infix = { v : new (System.ValueTuple$2(System.Int32,Function))() };
 
-                while (Parser.ParserSpecification.Infix.tryGetValue(tokenStream.Peek().TokenType, infixParselet) && precedence < infixParselet.v.Parser$IInfixParselet$Precedence) {
+                while (Parser.ParserSpecification.Infix.tryGetValue(tokenStream.Peek().TokenType, infix) && precedence < infix.v.Item1) {
                     tokenStream.Consume();
-                    leftExpression = infixParselet.v.Parser$IInfixParselet$Parse(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
+                    leftExpression = infix.v.Item2(Bridge.fn.cacheBind(this, this.ParseExpression), tokenStream, leftExpression);
                 }
 
                 return leftExpression;
@@ -224,10 +221,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 }
             }
         }
-    });
-
-    Bridge.define("Parser.IPrefixParselet", {
-        $kind: "interface"
     });
 
     Bridge.define("Parser.Identifier", {
@@ -327,8 +320,48 @@ Bridge.assembly("Parser", function ($asm, globals) {
             },
             ctors: {
                 init: function () {
-                    this.Prefix = $asm.$.Parser.ParserSpecification.f1(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IPrefixParselet))());
-                    this.Infix = $asm.$.Parser.ParserSpecification.f2(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Parser.IInfixParselet))());
+                    this.Prefix = $asm.$.Parser.ParserSpecification.f1(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,Function))());
+                    this.Infix = $asm.$.Parser.ParserSpecification.f2(new (System.Collections.Generic.Dictionary$2(Tokenizer.TokenType,System.ValueTuple$2(System.Int32,Function)))());
+                }
+            },
+            methods: {
+                CreatePostfixOperatorParselet: function (prefixExpressionType, precedence) {
+                    return new (System.ValueTuple$2(System.Int32,Function)).$ctor1(precedence, function (parseExpression, tokenStream, leftExpression) {
+                        return new Parser.PostfixExpression(prefixExpressionType, leftExpression);
+                    });
+                },
+                CreateAssignParselet: function () {
+                    return new (System.ValueTuple$2(System.Int32,Function)).$ctor1(Parser.Precedences.ASSIGNMENT, $asm.$.Parser.ParserSpecification.f6);
+                },
+                CreateTernaryParselet: function () {
+                    return new (System.ValueTuple$2(System.Int32,Function)).$ctor1(Parser.Precedences.CONDITIONAL, $asm.$.Parser.ParserSpecification.f7);
+                },
+                CreateCallParselet: function () {
+                    return new (System.ValueTuple$2(System.Int32,Function)).$ctor1(Parser.Precedences.CALL, $asm.$.Parser.ParserSpecification.f8);
+                },
+                CreateBinaryOperatorParselet: function (binaryExpressionType, precedence, associativity) {
+                    return new (System.ValueTuple$2(System.Int32,Function)).$ctor1(precedence, function (parseExpression, tokenStream, leftExpression) {
+                        var rightExpression = parseExpression(tokenStream, ((precedence + Parser.AssociativityExtensions.ToPrecedenceIncrement(associativity)) | 0));
+                        return new Parser.BinaryExpression(binaryExpressionType, leftExpression, rightExpression);
+                    });
+                },
+                CreateVariableParselet: function () {
+                    return $asm.$.Parser.ParserSpecification.f9;
+                },
+                CreateFloatingPointNumberParselet: function () {
+                    return $asm.$.Parser.ParserSpecification.f10;
+                },
+                CreateIntegerParselet: function () {
+                    return $asm.$.Parser.ParserSpecification.f11;
+                },
+                CreateGroupParselet: function () {
+                    return $asm.$.Parser.ParserSpecification.f12;
+                },
+                CreatePrefixOperatorParselet: function (prefixExpressionType) {
+                    return function (parseExpression, tokenStream, token) {
+                        var operand = parseExpression(tokenStream, Parser.Precedences.PREFIX);
+                        return new Parser.PrefixExpression(prefixExpressionType, operand);
+                    };
                 }
             }
         }
@@ -338,32 +371,92 @@ Bridge.assembly("Parser", function ($asm, globals) {
 
     Bridge.apply($asm.$.Parser.ParserSpecification, {
         f1: function (_o1) {
-            _o1.add(Tokenizer.TokenType.Identifier, new Parser.VariableParselet());
-            _o1.add(Tokenizer.TokenType.Decimal, new Parser.FloatingPointNumberParselet());
-            _o1.add(Tokenizer.TokenType.Integer, new Parser.IntegerParselet());
-            _o1.add(Tokenizer.TokenType.LeftParenthesis, new Parser.GroupParselet());
-            _o1.add(Tokenizer.TokenType.Minus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Negation, Parser.Precedences.PREFIX));
-            _o1.add(Tokenizer.TokenType.Plus, new Parser.PrefixOperatorParselet(Parser.PrefixExpressionType.Positive, Parser.Precedences.PREFIX));
+            _o1.add(Tokenizer.TokenType.Identifier, Parser.ParserSpecification.CreateVariableParselet());
+            _o1.add(Tokenizer.TokenType.Decimal, Parser.ParserSpecification.CreateFloatingPointNumberParselet());
+            _o1.add(Tokenizer.TokenType.Integer, Parser.ParserSpecification.CreateIntegerParselet());
+            _o1.add(Tokenizer.TokenType.LeftParenthesis, Parser.ParserSpecification.CreateGroupParselet());
+            _o1.add(Tokenizer.TokenType.Minus, Parser.ParserSpecification.CreatePrefixOperatorParselet(Parser.PrefixExpressionType.Negation));
+            _o1.add(Tokenizer.TokenType.Plus, Parser.ParserSpecification.CreatePrefixOperatorParselet(Parser.PrefixExpressionType.Positive));
             return _o1;
         },
         f2: function (_o2) {
-            _o2.add(Tokenizer.TokenType.Exclamation, new Parser.PostfixOperatorParselet(Parser.PostfixExpressionType.Factorial, Parser.Precedences.POSTFIX));
-            _o2.add(Tokenizer.TokenType.Assignment, new Parser.AssignParselet());
-            _o2.add(Tokenizer.TokenType.Equal, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Equal, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.NotEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.NotEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Less, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Less, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Greater, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Greater, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.LessOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.LessOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.GreaterOrEqual, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.GreaterOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.QuestionMark, new Parser.TernaryParselet());
-            _o2.add(Tokenizer.TokenType.LeftParenthesis, new Parser.CallParselet());
-            _o2.add(Tokenizer.TokenType.Plus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Addition, Parser.Precedences.SUM, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Minus, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Substraction, Parser.Precedences.SUM, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Star, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Multiplication, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Slash, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Division, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
-            _o2.add(Tokenizer.TokenType.Pow, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Power, Parser.Precedences.EXPONENT, Parser.Associativity.Right));
-            _o2.add(Tokenizer.TokenType.Percent, new Parser.BinaryOperatorParselet(Parser.BinaryExpressionType.Modulo, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Exclamation, Parser.ParserSpecification.CreatePostfixOperatorParselet(Parser.PostfixExpressionType.Factorial, Parser.Precedences.POSTFIX));
+            _o2.add(Tokenizer.TokenType.Assignment, Parser.ParserSpecification.CreateAssignParselet());
+            _o2.add(Tokenizer.TokenType.Equal, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Equal, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.NotEqual, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.NotEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Less, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Less, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Greater, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Greater, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.LessOrEqual, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.LessOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.GreaterOrEqual, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.GreaterOrEqual, Parser.Precedences.COMPARISON, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.QuestionMark, Parser.ParserSpecification.CreateTernaryParselet());
+            _o2.add(Tokenizer.TokenType.LeftParenthesis, Parser.ParserSpecification.CreateCallParselet());
+            _o2.add(Tokenizer.TokenType.Plus, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Addition, Parser.Precedences.SUM, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Minus, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Substraction, Parser.Precedences.SUM, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Star, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Multiplication, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Slash, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Division, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
+            _o2.add(Tokenizer.TokenType.Pow, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Power, Parser.Precedences.EXPONENT, Parser.Associativity.Right));
+            _o2.add(Tokenizer.TokenType.Percent, Parser.ParserSpecification.CreateBinaryOperatorParselet(Parser.BinaryExpressionType.Modulo, Parser.Precedences.PRODUCT, Parser.Associativity.Left));
             return _o2;
+        },
+        f3: function (argument) {
+            return (Bridge.as(argument, Parser.VariableExpression));
+        },
+        f4: function (arg) {
+            return arg != null;
+        },
+        f5: function (argument) {
+            return argument.Identifier;
+        },
+        f6: function (parseExpression, tokenStream, leftExpression) {
+            var rightExpression = parseExpression(tokenStream, ((Parser.Precedences.ASSIGNMENT + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
+            if (Bridge.is(leftExpression, Parser.VariableExpression)) {
+                var identifier = Bridge.cast(leftExpression, Parser.VariableExpression).Identifier;
+                return new Parser.VariableAssignmentExpression(identifier, rightExpression);
+            } else if (Bridge.is(leftExpression, Parser.CallExpression)) {
+                var callExpression = Bridge.cast(leftExpression, Parser.CallExpression);
+                var $arguments = System.Linq.Enumerable.from(callExpression.Arguments).select($asm.$.Parser.ParserSpecification.f3);
+                var functionExpression = Bridge.as(callExpression.FunctionExpression, Parser.VariableExpression);
+                if (System.Linq.Enumerable.from($arguments).all($asm.$.Parser.ParserSpecification.f4) && functionExpression != null) {
+                    return new Parser.FunctionAssignmentExpression(functionExpression.Identifier, System.Linq.Enumerable.from($arguments).select($asm.$.Parser.ParserSpecification.f5), rightExpression);
+                } else {
+                    throw new Parser.BadAssignmentException.$ctor1("Every argument in a function assignment must be a variable name.");
+                }
+            }
+
+            throw new Parser.BadAssignmentException.$ctor1("The left hand side of an assignment must either be a function signature or a variable name.");
+        },
+        f7: function (parseExpression, tokenStream, leftExpression) {
+            var trueExpression = parseExpression(tokenStream, 0);
+            tokenStream.Consume$1(Tokenizer.TokenType.Colon);
+            var falseExpression = parseExpression(tokenStream, ((Parser.Precedences.CONDITIONAL + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
+            return new Parser.TernaryExpression(leftExpression, trueExpression, falseExpression);
+        },
+        f8: function (parseExpression, tokenStream, leftExpression) {
+            var $arguments = new (System.Collections.Generic.List$1(Parser.IExpression)).ctor();
+            if (!tokenStream.Match(Tokenizer.TokenType.RightParenthesis)) {
+                do {
+                    $arguments.add(parseExpression(tokenStream, 0));
+                } while (tokenStream.Match(Tokenizer.TokenType.Comma));
+                tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
+            }
+
+            return new Parser.CallExpression(leftExpression, $arguments);
+        },
+        f9: function (parseExpression, tokenStream, token) {
+            return new Parser.VariableExpression(Parser.Identifier.op_Implicit(token.Content));
+        },
+        f10: function (parseExpression, tokenStream, token) {
+            var result = System.Double.parse(token.Content);
+            return new Parser.ValueExpression(Parser.Value.Decimal(result));
+        },
+        f11: function (parseExpression, tokenStream, token) {
+            var result = System.Int64.parse(token.Content);
+            return new Parser.ValueExpression(Parser.Value.Integer(result));
+        },
+        f12: function (parseExpression, tokenStream, token) {
+            var expression = parseExpression(tokenStream, 0);
+            tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
+            return new Parser.GroupExpression(expression);
         }
     });
 
@@ -660,58 +753,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("Parser.AssignParselet", {
-        inherits: [Parser.IInfixParselet],
-        props: {
-            Precedence: {
-                get: function () {
-                    return Parser.Precedences.ASSIGNMENT;
-                }
-            }
-        },
-        alias: [
-            "Parse", "Parser$IInfixParselet$Parse",
-            "Precedence", "Parser$IInfixParselet$Precedence"
-        ],
-        methods: {
-            Parse: function (parseExpression, tokenStream, leftExpression) {
-                var rightExpression = parseExpression(tokenStream, ((Parser.Precedences.ASSIGNMENT + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
-
-                if (Bridge.is(leftExpression, Parser.VariableExpression)) {
-                    var identifier = Bridge.cast(leftExpression, Parser.VariableExpression).Identifier;
-                    return new Parser.VariableAssignmentExpression(identifier, rightExpression);
-                } else if (Bridge.is(leftExpression, Parser.CallExpression)) {
-                    var callExpression = Bridge.cast(leftExpression, Parser.CallExpression);
-
-                    var $arguments = System.Linq.Enumerable.from(callExpression.Arguments).select($asm.$.Parser.AssignParselet.f1);
-                    var functionExpression = Bridge.as(callExpression.FunctionExpression, Parser.VariableExpression);
-
-                    if (System.Linq.Enumerable.from($arguments).all($asm.$.Parser.AssignParselet.f2) && functionExpression != null) {
-                        return new Parser.FunctionAssignmentExpression(functionExpression.Identifier, System.Linq.Enumerable.from($arguments).select($asm.$.Parser.AssignParselet.f3), rightExpression);
-                    } else {
-                        throw new Parser.BadAssignmentException.$ctor1("Every argument in a function assignment must be a variable name.");
-                    }
-                }
-
-                throw new Parser.BadAssignmentException.$ctor1("The left hand side of an assignment must either be a function signature or a variable name.");
-            }
-        }
-    });
-
-    Bridge.ns("Parser.AssignParselet", $asm.$);
-
-    Bridge.apply($asm.$.Parser.AssignParselet, {
-        f1: function (argument) {
-            return (Bridge.as(argument, Parser.VariableExpression));
-        },
-        f2: function (arg) {
-            return arg != null;
-        },
-        f3: function (argument) {
-            return argument.Identifier;
-        }
-    });
-
     Bridge.define("Parser.BottomUpExpressionVisitor", {
         inherits: [Parser.IExpressionVisitor],
         props: {
@@ -791,35 +832,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("Parser.BinaryOperatorParselet", {
-        inherits: [Parser.IInfixParselet],
-        fields: {
-            _binaryExpressionType: 0,
-            _associativity: 0
-        },
-        props: {
-            Precedence: 0
-        },
-        alias: [
-            "Parse", "Parser$IInfixParselet$Parse",
-            "Precedence", "Parser$IInfixParselet$Precedence"
-        ],
-        ctors: {
-            ctor: function (binaryExpressionType, precedence, associativity) {
-                this.$initialize();
-                this._binaryExpressionType = binaryExpressionType;
-                this.Precedence = precedence;
-                this._associativity = associativity;
-            }
-        },
-        methods: {
-            Parse: function (parseExpression, tokenStream, leftExpression) {
-                var rightExpression = parseExpression(tokenStream, ((this.Precedence + Parser.AssociativityExtensions.ToPrecedenceIncrement(this._associativity)) | 0));
-                return new Parser.BinaryExpression(this._binaryExpressionType, leftExpression, rightExpression);
-            }
-        }
-    });
-
     Bridge.define("Parser.CallExpression", {
         inherits: [Parser.IExpression],
         props: {
@@ -840,36 +852,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
                     visitor.Parser$IExpressionVisitor$Visit$1(this);
                 }), children);
-            }
-        }
-    });
-
-    Bridge.define("Parser.CallParselet", {
-        inherits: [Parser.IInfixParselet],
-        props: {
-            Precedence: {
-                get: function () {
-                    return Parser.Precedences.CALL;
-                }
-            }
-        },
-        alias: [
-            "Parse", "Parser$IInfixParselet$Parse",
-            "Precedence", "Parser$IInfixParselet$Precedence"
-        ],
-        methods: {
-            Parse: function (parseExpression, tokenStream, leftExpression) {
-                var $arguments = new (System.Collections.Generic.List$1(Parser.IExpression)).ctor();
-
-                if (!tokenStream.Match(Tokenizer.TokenType.RightParenthesis)) {
-                    do {
-                        $arguments.add(parseExpression(tokenStream, 0));
-                    } while (tokenStream.Match(Tokenizer.TokenType.Comma));
-
-                    tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
-                }
-
-                return new Parser.CallExpression(leftExpression, $arguments);
             }
         }
     });
@@ -1152,36 +1134,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("Parser.FixValueParselet", {
-        inherits: [Parser.IPrefixParselet],
-        fields: {
-            _value: null
-        },
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        ctors: {
-            ctor: function (value) {
-                this.$initialize();
-                this._value = value;
-            }
-        },
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                return new Parser.ValueExpression(this._value);
-            }
-        }
-    });
-
-    Bridge.define("Parser.FloatingPointNumberParselet", {
-        inherits: [Parser.IPrefixParselet],
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                var result = System.Double.parse(token.Content);
-                return new Parser.ValueExpression(Parser.Value.Decimal(result));
-            }
-        }
-    });
-
     Bridge.define("Parser.FunctionAssignmentExpression", {
         inherits: [Parser.IExpression],
         props: {
@@ -1228,29 +1180,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("Parser.GroupParselet", {
-        inherits: [Parser.IPrefixParselet],
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                var expression = parseExpression(tokenStream, 0);
-                tokenStream.Consume$1(Tokenizer.TokenType.RightParenthesis);
-                return new Parser.GroupExpression(expression);
-            }
-        }
-    });
-
-    Bridge.define("Parser.IntegerParselet", {
-        inherits: [Parser.IPrefixParselet],
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                var result = System.Int64.parse(token.Content);
-                return new Parser.ValueExpression(Parser.Value.Integer(result));
-            }
-        }
-    });
-
     Bridge.define("Parser.PostfixExpression", {
         inherits: [Parser.IExpression],
         props: {
@@ -1274,32 +1203,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
-    Bridge.define("Parser.PostfixOperatorParselet", {
-        inherits: [Parser.IInfixParselet],
-        fields: {
-            _postfixExpressionType: 0
-        },
-        props: {
-            Precedence: 0
-        },
-        alias: [
-            "Parse", "Parser$IInfixParselet$Parse",
-            "Precedence", "Parser$IInfixParselet$Precedence"
-        ],
-        ctors: {
-            ctor: function (postfixExpressionType, precedence) {
-                this.$initialize();
-                this._postfixExpressionType = postfixExpressionType;
-                this.Precedence = precedence;
-            }
-        },
-        methods: {
-            Parse: function (parseExpression, tokenStream, leftExpression) {
-                return new Parser.PostfixExpression(this._postfixExpressionType, leftExpression);
-            }
-        }
-    });
-
     Bridge.define("Parser.PrefixExpression", {
         inherits: [Parser.IExpression],
         props: {
@@ -1319,28 +1222,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
                     visitor.Parser$IExpressionVisitor$Visit$5(this);
                 }), [this.RightOperand]);
-            }
-        }
-    });
-
-    Bridge.define("Parser.PrefixOperatorParselet", {
-        inherits: [Parser.IPrefixParselet],
-        fields: {
-            _prefixExpressionType: 0,
-            _precedence: 0
-        },
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        ctors: {
-            ctor: function (prefixExpressionType, precedence) {
-                this.$initialize();
-                this._prefixExpressionType = prefixExpressionType;
-                this._precedence = precedence;
-            }
-        },
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                var operand = parseExpression(tokenStream, this._precedence);
-                return new Parser.PrefixExpression(this._prefixExpressionType, operand);
             }
         }
     });
@@ -1414,29 +1295,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
                     visitor.Parser$IExpressionVisitor$Visit$6(this);
                 }), [this.Condition, this.TrueCase, this.FalseCase]);
-            }
-        }
-    });
-
-    Bridge.define("Parser.TernaryParselet", {
-        inherits: [Parser.IInfixParselet],
-        props: {
-            Precedence: {
-                get: function () {
-                    return Parser.Precedences.CONDITIONAL;
-                }
-            }
-        },
-        alias: [
-            "Parse", "Parser$IInfixParselet$Parse",
-            "Precedence", "Parser$IInfixParselet$Precedence"
-        ],
-        methods: {
-            Parse: function (parseExpression, tokenStream, leftExpression) {
-                var trueExpression = parseExpression(tokenStream, 0);
-                tokenStream.Consume$1(Tokenizer.TokenType.Colon);
-                var falseExpression = parseExpression(tokenStream, ((Parser.Precedences.CONDITIONAL + Parser.AssociativityExtensions.ToPrecedenceIncrement(Parser.Associativity.Right)) | 0));
-                return new Parser.TernaryExpression(leftExpression, trueExpression, falseExpression);
             }
         }
     });
@@ -1526,16 +1384,6 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
                     visitor.Parser$IExpressionVisitor$Visit$9(this);
                 }));
-            }
-        }
-    });
-
-    Bridge.define("Parser.VariableParselet", {
-        inherits: [Parser.IPrefixParselet],
-        alias: ["Parse", "Parser$IPrefixParselet$Parse"],
-        methods: {
-            Parse: function (parseExpression, tokenStream, token) {
-                return new Parser.VariableExpression(Parser.Identifier.op_Implicit(token.Content));
             }
         }
     });
