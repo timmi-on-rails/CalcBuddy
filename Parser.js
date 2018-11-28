@@ -977,6 +977,9 @@ Bridge.assembly("Parser", function ($asm, globals) {
                         case Parser.PrefixExpressionType.Negation: 
                             result = -value;
                             break;
+                        case Parser.PrefixExpressionType.Positive: 
+                            result = value;
+                            break;
                         default: 
                             var message = System.String.format("Unhandled prefix operation {0}.", [Bridge.box(prefixExpression.PrefixExpressionType, Parser.PrefixExpressionType, System.Enum.toStringFn(Parser.PrefixExpressionType))]);
                             throw new Parser.EvaluationException.$ctor1(message);
