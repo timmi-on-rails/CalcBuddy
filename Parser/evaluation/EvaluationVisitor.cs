@@ -122,6 +122,9 @@ namespace Parser
 					case PrefixExpressionType.Negation:
 						result = -value;
 						break;
+					case PrefixExpressionType.Positive:
+						result = value;
+						break;
 					default:
 						string message = String.Format("Unhandled prefix operation {0}.", prefixExpression.PrefixExpressionType);
 						throw new EvaluationException(message);

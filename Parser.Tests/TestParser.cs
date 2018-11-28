@@ -6,6 +6,13 @@ namespace Parser.Tests
 	public class TestParser
 	{
 		[Test]
+		public void TestSigns()
+		{
+			"-20".ShouldParseAs("(-20)");
+			"+15".ShouldParseAs("(+15)");
+		}
+
+		[Test]
 		public void TestPointBeforeLine()
 		{
 			"1 + 2 * 3".ShouldParseAs("(1+(2*3))");

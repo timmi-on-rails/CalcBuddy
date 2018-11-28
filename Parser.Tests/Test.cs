@@ -15,6 +15,13 @@ namespace Parser.Tests
 		}
 
 		[Test]
+		public void TestSigns()
+		{
+			"-13".ShouldEvaluateTo(-13);
+			"+9".ShouldEvaluateTo(9);
+		}
+
+		[Test]
 		public void TestAddition()
 		{
 			Assert.AreEqual(4, "2+2".Evaluate());
