@@ -32,7 +32,7 @@
               navigator.serviceWorker.ready.then(function (registration) {
                   console.log('Service Worker Ready');
                   navigator.registerProtocolHandler("web+calcbuddy",
-                    "https://timmi-on-rails.github.io/CalcBuddy/%s",
+                    "https://timmi-on-rails.github.io/CalcBuddy/?q=%s",
                     "CalcBuddy handler");
               });
           });
