@@ -1,5 +1,5 @@
 /**
- * @version 1.0.6906.37219
+ * @version 1.0.6918.31490
  * @copyright tom
  * @compiler Bridge.NET 17.4.0
  */
@@ -23,6 +23,7 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
             tokenContentBuilder: null,
             textReader: null,
             index: 0,
+            line: 0,
             peek: 0
         },
         ctors: {
@@ -46,7 +47,7 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                 var content = this.tokenContentBuilder.toString();
                 this.tokenContentBuilder.clear();
                 var startPosition = (this.index - content.length) | 0;
-                return new Tokenizer.Token(tokenType, content, startPosition, errorCode);
+                return new Tokenizer.Token(tokenType, content, this.line, startPosition, errorCode);
             },
             PeekIsPunctuation: function () {
                 return this.peek === 60 || this.peek === 62 || this.peek === 40 || this.peek === 41 || this.peek === 33 || this.peek === 94 || this.peek === 42 || this.peek === 43 || this.peek === 45 || this.peek === 61 || this.peek === 47 || this.peek === 37 || this.peek === 44 || this.peek === 63 || this.peek === 58 || this.peek === 59 || this.peek === 46 || this.peek === 123 || this.peek === 125 || this.peek === 91 || this.peek === 93 || this.peek === 38 || this.peek === 124 || this.peek === 126;
@@ -64,7 +65,10 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                 return this.peek === -1;
             },
             PeekIsWordSeparator: function () {
-                return this.PeekIsWhiteSpace() || this.PeekIsPunctuation() || this.PeekIsEOF();
+                return this.PeekIsWhiteSpace() || this.PeekIsPunctuation() || this.PeekIsEOF() || this.PeekIsNewline();
+            },
+            PeekIsNewline: function () {
+                return this.peek === 10;
             },
             Scan: function () {
                 return new (Bridge.GeneratorEnumerable$1(Tokenizer.Token))(Bridge.fn.bind(this, function ()  {
@@ -87,11 +91,11 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                                 $step = 2;
                                                 continue;
                                             } 
-                                            $step = 24;
+                                            $step = 28;
                                             continue;
                                     }
                                     case 2: {
-                                        if (this.PeekIsLetter() || this.peek === 95) {
+                                        if (this.PeekIsNewline()) {
                                                 $step = 3;
                                                 continue;
                                             } else  {
@@ -100,16 +104,18 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                             }
                                     }
                                     case 3: {
-                                        $enumerator.current = this.ScanIdentifier();
+                                        this.Consume();
+                                            $enumerator.current = this.CreateToken(Tokenizer.TokenType.Newline);
                                             $step = 4;
                                             return true;
                                     }
                                     case 4: {
-                                        $step = 23;
+                                        this.line = (this.line + 1) | 0;
+                                        $step = 27;
                                         continue;
                                     }
                                     case 5: {
-                                        if (this.PeekIsWhiteSpace()) {
+                                        if (this.PeekIsLetter() || this.peek === 95) {
                                                 $step = 6;
                                                 continue;
                                             } else  {
@@ -118,16 +124,16 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                             }
                                     }
                                     case 6: {
-                                        $enumerator.current = this.ScanWhiteSpace();
+                                        $enumerator.current = this.ScanIdentifier();
                                             $step = 7;
                                             return true;
                                     }
                                     case 7: {
-                                        $step = 22;
+                                        $step = 26;
                                         continue;
                                     }
                                     case 8: {
-                                        if (this.peek === 46) {
+                                        if (this.PeekIsWhiteSpace()) {
                                                 $step = 9;
                                                 continue;
                                             } else  {
@@ -136,16 +142,16 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                             }
                                     }
                                     case 9: {
-                                        $enumerator.current = this.ScanDecimal();
+                                        $enumerator.current = this.ScanWhiteSpace();
                                             $step = 10;
                                             return true;
                                     }
                                     case 10: {
-                                        $step = 21;
+                                        $step = 25;
                                         continue;
                                     }
                                     case 11: {
-                                        if (this.PeekIsPunctuation()) {
+                                        if (this.peek === 46) {
                                                 $step = 12;
                                                 continue;
                                             } else  {
@@ -154,16 +160,16 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                             }
                                     }
                                     case 12: {
-                                        $enumerator.current = this.ScanPunctuation();
+                                        $enumerator.current = this.ScanDecimal();
                                             $step = 13;
                                             return true;
                                     }
                                     case 13: {
-                                        $step = 20;
+                                        $step = 24;
                                         continue;
                                     }
                                     case 14: {
-                                        if (this.PeekIsDigit()) {
+                                        if (this.PeekIsPunctuation()) {
                                                 $step = 15;
                                                 continue;
                                             } else  {
@@ -172,30 +178,36 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                             }
                                     }
                                     case 15: {
-                                        $enumerator.current = this.ScanInteger();
+                                        $enumerator.current = this.ScanPunctuation();
                                             $step = 16;
                                             return true;
                                     }
                                     case 16: {
-                                        $step = 19;
+                                        $step = 23;
                                         continue;
                                     }
                                     case 17: {
-                                        $enumerator.current = this.ScanWord(Tokenizer.ErrorCode.Unknown);
-                                            $step = 18;
-                                            return true;
+                                        if (this.PeekIsDigit()) {
+                                                $step = 18;
+                                                continue;
+                                            } else  {
+                                                $step = 20;
+                                                continue;
+                                            }
                                     }
                                     case 18: {
-                                        $step = 19;
-                                        continue;
+                                        $enumerator.current = this.ScanInteger();
+                                            $step = 19;
+                                            return true;
                                     }
                                     case 19: {
-                                        $step = 20;
+                                        $step = 22;
                                         continue;
                                     }
                                     case 20: {
-                                        $step = 21;
-                                        continue;
+                                        $enumerator.current = this.ScanWord(Tokenizer.ErrorCode.Unknown);
+                                            $step = 21;
+                                            return true;
                                     }
                                     case 21: {
                                         $step = 22;
@@ -206,16 +218,32 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                                         continue;
                                     }
                                     case 23: {
+                                        $step = 24;
+                                        continue;
+                                    }
+                                    case 24: {
+                                        $step = 25;
+                                        continue;
+                                    }
+                                    case 25: {
+                                        $step = 26;
+                                        continue;
+                                    }
+                                    case 26: {
+                                        $step = 27;
+                                        continue;
+                                    }
+                                    case 27: {
                                         
                                             $step = 1;
                                             continue;
                                     }
-                                    case 24: {
+                                    case 28: {
                                         $enumerator.current = this.CreateToken(Tokenizer.TokenType.EndOfFile);
-                                            $step = 25;
+                                            $step = 29;
                                             return true;
                                     }
-                                    case 25: {
+                                    case 29: {
 
                                     }
                                     default: {
@@ -418,14 +446,16 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
         props: {
             TokenType: 0,
             Content: null,
+            Line: 0,
             Position: 0,
             ErrorCode: 0
         },
         ctors: {
-            ctor: function (tokenType, content, position, errorCode) {
+            ctor: function (tokenType, content, line, position, errorCode) {
                 this.$initialize();
                 this.TokenType = tokenType;
                 this.Content = content;
+                this.Line = line;
                 this.Position = position;
                 this.ErrorCode = errorCode;
             }
@@ -481,7 +511,8 @@ Bridge.assembly("Tokenizer", function ($asm, globals) {
                 AndDouble: 32,
                 AndSingle: 33,
                 PipeSingle: 34,
-                PipeDouble: 35
+                PipeDouble: 35,
+                Newline: 36
             }
         }
     });

@@ -188,6 +188,34 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 }
 
                 return leftExpression;
+            },
+            ParseStatement: function (tokenStream) {
+                var expression = this.Parse(tokenStream);
+                var line = tokenStream.Peek().Line;
+
+                if (tokenStream.Match(Tokenizer.TokenType.Semicolon)) {
+                    return new Parser.StatementExpression(expression, false, line);
+                }
+
+                if (tokenStream.Match(Tokenizer.TokenType.Newline) || tokenStream.Peek().TokenType === Tokenizer.TokenType.EndOfFile) {
+                    return new Parser.StatementExpression(expression, true, line);
+                }
+
+                throw new Parser.ParserException.$ctor1("Expected Newline or semicolon.");
+            },
+            ParseStatements: function (tokenStream) {
+                var statements = new (System.Collections.Generic.List$1(Parser.StatementExpression)).ctor();
+
+                while (tokenStream.Peek().TokenType !== Tokenizer.TokenType.EndOfFile) {
+                    while (tokenStream.Peek().TokenType === Tokenizer.TokenType.Newline) {
+                        tokenStream.Consume();
+                    }
+
+                    var statement = this.ParseStatement(tokenStream);
+                    statements.add(statement);
+                }
+
+                return new Parser.StatementsExpression(statements);
             }
         }
     });
@@ -307,6 +335,74 @@ Bridge.assembly("Parser", function ($asm, globals) {
     Bridge.ns("Parser.MathParser", $asm.$);
 
     Bridge.apply($asm.$.Parser.MathParser, {
+        f1: function (token) {
+            return token.TokenType !== Tokenizer.TokenType.WhiteSpace;
+        }
+    });
+
+    Bridge.define("Parser.Notebook", {
+        props: {
+            Content: null,
+            Results: null
+        },
+        ctors: {
+            init: function () {
+                this.Results = new (System.Collections.Generic.Dictionary$2(System.Int32,System.String))();
+            },
+            ctor: function (content) {
+                this.$initialize();
+                this.Content = content;
+            }
+        },
+        methods: {
+            Process: function () {
+                var $t;
+                var tokensWithoutWhiteSpaces = System.Linq.Enumerable.from(Tokenizer.Tokenize.FromString(this.Content)).where($asm.$.Parser.Notebook.f1);
+
+                var statements;
+
+                var tokenStream = new Parser.TokenStream(tokensWithoutWhiteSpaces);
+                try {
+                    var expressionParser = new Parser.ExpressionParser();
+                    statements = expressionParser.ParseStatements(tokenStream);
+
+                    tokenStream.Consume$1(Tokenizer.TokenType.EndOfFile);
+                }
+                finally {
+                    if (Bridge.hasValue(tokenStream)) {
+                        tokenStream.System$IDisposable$Dispose();
+                    }
+                }
+
+                this.Results.clear();
+                var symbolManager = new Parser.SymbolManager();
+
+                $t = Bridge.getEnumerator(statements.Statements, Parser.StatementExpression);
+                try {
+                    while ($t.moveNext()) {
+                        var expression = $t.Current;
+                        var assignVisitor = new Parser.AssignVisitor(symbolManager);
+                        expression.Accept(assignVisitor);
+
+                        if (expression.Loud) {
+                            var evaluationVisitor = new Parser.EvaluationVisitor(symbolManager);
+                            expression.Accept(evaluationVisitor);
+                            var result = evaluationVisitor.GetResult().toString();
+                            this.Results.add(expression.Line, result);
+                        }
+                    }
+                } finally {
+                    if (Bridge.is($t, System.IDisposable)) {
+                        $t.System$IDisposable$Dispose();
+                    }
+                }
+            }
+        }
+    });
+
+    Bridge.ns("Parser.Notebook", $asm.$);
+
+    Bridge.apply($asm.$.Parser.Notebook, {
         f1: function (token) {
             return token.TokenType !== Tokenizer.TokenType.WhiteSpace;
         }
@@ -766,26 +862,30 @@ Bridge.assembly("Parser", function ($asm, globals) {
             "Traversal", "Parser$IExpressionVisitor$Traversal",
             "Visit$4", "Parser$IExpressionVisitor$Visit$4",
             "Visit$1", "Parser$IExpressionVisitor$Visit$1",
-            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$10", "Parser$IExpressionVisitor$Visit$10",
             "Visit$3", "Parser$IExpressionVisitor$Visit$3",
             "Visit$2", "Parser$IExpressionVisitor$Visit$2",
-            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$11", "Parser$IExpressionVisitor$Visit$11",
             "Visit$9", "Parser$IExpressionVisitor$Visit$9",
-            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
             "Visit$5", "Parser$IExpressionVisitor$Visit$5",
-            "Visit", "Parser$IExpressionVisitor$Visit"
+            "Visit", "Parser$IExpressionVisitor$Visit",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7"
         ],
         methods: {
             Visit$4: function (postfixExpression) { },
             Visit$1: function (functionExpression) { },
-            Visit$8: function (variableAssignmentExpression) { },
+            Visit$10: function (variableAssignmentExpression) { },
             Visit$3: function (groupExpression) { },
             Visit$2: function (functionAssignmentExpression) { },
-            Visit$6: function (ternaryExpression) { },
-            Visit$9: function (variableExpression) { },
-            Visit$7: function (valueExpression) { },
+            Visit$8: function (ternaryExpression) { },
+            Visit$11: function (variableExpression) { },
+            Visit$9: function (valueExpression) { },
             Visit$5: function (prefixExpression) { },
-            Visit: function (binaryExpression) { }
+            Visit: function (binaryExpression) { },
+            Visit$6: function (statementExpression) { },
+            Visit$7: function (statementsExpression) { }
         }
     });
 
@@ -873,14 +973,16 @@ Bridge.assembly("Parser", function ($asm, globals) {
             "Traversal", "Parser$IExpressionVisitor$Traversal",
             "Visit", "Parser$IExpressionVisitor$Visit",
             "Visit$5", "Parser$IExpressionVisitor$Visit$5",
-            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
-            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
-            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
             "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$1", "Parser$IExpressionVisitor$Visit$1",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$11", "Parser$IExpressionVisitor$Visit$11",
             "Visit$4", "Parser$IExpressionVisitor$Visit$4",
             "Visit$3", "Parser$IExpressionVisitor$Visit$3",
-            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
-            "Visit$2", "Parser$IExpressionVisitor$Visit$2"
+            "Visit$10", "Parser$IExpressionVisitor$Visit$10",
+            "Visit$2", "Parser$IExpressionVisitor$Visit$2",
+            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$7", "Parser$IExpressionVisitor$Visit$7"
         ],
         ctors: {
             ctor: function (symbolManager) {
@@ -991,7 +1093,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     throw new Parser.EvaluationException.$ctor1(message1);
                 }
             },
-            Visit$7: function (valueExpression) {
+            Visit$9: function (valueExpression) {
                 if (valueExpression.Value.IsExpression) {
                     valueExpression.Value.ToExpression().Expr.Parser$IExpression$Accept(this);
                 } else {
@@ -1033,7 +1135,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     throw new Parser.EvaluationException.$ctor1("Invalid function call with " + numArguments + " arguments.");
                 }
             },
-            Visit$6: function (ternaryExpression) {
+            Visit$8: function (ternaryExpression) {
                 ternaryExpression.Condition.Parser$IExpression$Accept(this);
                 var conditionOperand = this._evaluationStack.Pop();
 
@@ -1050,7 +1152,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                     throw new Parser.EvaluationException.$ctor1(message);
                 }
             },
-            Visit$9: function (variableExpression) {
+            Visit$11: function (variableExpression) {
                 if (this._symbolManager != null && this._symbolManager.Parser$ISymbolManager$IsSet(variableExpression.Identifier)) {
                     // TODO decide whether this is good or not , do we want to evaluate like that?!
                     var value = this._symbolManager.Parser$ISymbolManager$Get(variableExpression.Identifier);
@@ -1099,12 +1201,18 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Visit$3: function (groupExpression) {
                 groupExpression.Operand.Parser$IExpression$Accept(this);
             },
-            Visit$8: function (variableAssignmentExpression) {
+            Visit$10: function (variableAssignmentExpression) {
                 variableAssignmentExpression.Expression.Parser$IExpression$Accept(this);
             },
             Visit$2: function (functionAssignmentExpression) {
                 var value = Parser.AssignVisitor.GetFunction(functionAssignmentExpression, this._symbolManager);
                 this._evaluationStack.Push(value);
+            },
+            Visit$6: function (statementExpression) {
+                statementExpression.Expression.Parser$IExpression$Accept(this);
+            },
+            Visit$7: function (statementsExpression) {
+                throw new System.NotImplementedException.ctor();
             }
         }
     });
@@ -1229,6 +1337,52 @@ Bridge.assembly("Parser", function ($asm, globals) {
         }
     });
 
+    Bridge.define("Parser.StatementExpression", {
+        inherits: [Parser.IExpression],
+        props: {
+            Expression: null,
+            Loud: false,
+            Line: 0
+        },
+        alias: ["Accept", "Parser$IExpression$Accept"],
+        ctors: {
+            ctor: function (expression, loud, line) {
+                this.$initialize();
+                this.Expression = expression;
+                this.Loud = loud;
+                this.Line = line;
+            }
+        },
+        methods: {
+            Accept: function (visitor) {
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$6(this);
+                }), [this.Expression]);
+            }
+        }
+    });
+
+    Bridge.define("Parser.StatementsExpression", {
+        inherits: [Parser.IExpression],
+        props: {
+            Statements: null
+        },
+        alias: ["Accept", "Parser$IExpression$Accept"],
+        ctors: {
+            ctor: function (statements) {
+                this.$initialize();
+                this.Statements = System.Linq.Enumerable.from(statements).ToArray();
+            }
+        },
+        methods: {
+            Accept: function (visitor) {
+                Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
+                    visitor.Parser$IExpressionVisitor$Visit$7(this);
+                }), System.Linq.Enumerable.from(this.Statements).ToArray());
+            }
+        }
+    });
+
     Bridge.define("Parser.SymbolicExpression", {
         inherits: [Parser.IExpression],
         props: {
@@ -1296,7 +1450,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Accept: function (visitor) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.Parser$IExpressionVisitor$Visit$6(this);
+                    visitor.Parser$IExpressionVisitor$Visit$8(this);
                 }), [this.Condition, this.TrueCase, this.FalseCase]);
             }
         }
@@ -1336,11 +1490,11 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Accept: function (visitor) {
                 if (this.Value.IsExpression) {
                     Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                        visitor.Parser$IExpressionVisitor$Visit$7(this);
+                        visitor.Parser$IExpressionVisitor$Visit$9(this);
                     }), [this.Value.ToExpression().Expr]);
                 } else {
                     Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                        visitor.Parser$IExpressionVisitor$Visit$7(this);
+                        visitor.Parser$IExpressionVisitor$Visit$9(this);
                     }));
                 }
             }
@@ -1364,7 +1518,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Accept: function (visitor) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.Parser$IExpressionVisitor$Visit$8(this);
+                    visitor.Parser$IExpressionVisitor$Visit$10(this);
                 }), [this.Expression]);
             }
         }
@@ -1385,7 +1539,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
         methods: {
             Accept: function (visitor) {
                 Parser.ExpressionVisitorExtensions.Traverse(visitor, Bridge.fn.bind(this, function () {
-                    visitor.Parser$IExpressionVisitor$Visit$9(this);
+                    visitor.Parser$IExpressionVisitor$Visit$11(this);
                 }));
             }
         }
@@ -1408,7 +1562,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
             _symbolManager: null
         },
         alias: [
-            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$10", "Parser$IExpressionVisitor$Visit$10",
             "Visit$2", "Parser$IExpressionVisitor$Visit$2"
         ],
         ctors: {
@@ -1419,7 +1573,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
             }
         },
         methods: {
-            Visit$8: function (variableAssignmentExpression) {
+            Visit$10: function (variableAssignmentExpression) {
                 var evaluationVisitor = new Parser.EvaluationVisitor(this._symbolManager);
                 variableAssignmentExpression.Expression.Parser$IExpression$Accept(evaluationVisitor);
 
@@ -1437,7 +1591,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
             argNames: null,
             arguments: null
         },
-        alias: ["Visit$9", "Parser$IExpressionVisitor$Visit$9"],
+        alias: ["Visit$11", "Parser$IExpressionVisitor$Visit$11"],
         ctors: {
             ctor: function (argNames, $arguments, symbolProvider) {
                 this.$initialize();
@@ -1447,12 +1601,12 @@ Bridge.assembly("Parser", function ($asm, globals) {
             }
         },
         methods: {
-            Visit$9: function (variableExpression) {
+            Visit$11: function (variableExpression) {
                 if (System.Linq.Enumerable.from(this.argNames).contains(variableExpression.Identifier)) {
                     var idx = System.Linq.Enumerable.from(this.argNames).toList(Parser.Identifier).indexOf(variableExpression.Identifier);
                     this._evaluationStack.Push(this.arguments[System.Array.index(idx, this.arguments)]);
                 } else {
-                    Parser.EvaluationVisitor.prototype.Visit$9.call(this, variableExpression);
+                    Parser.EvaluationVisitor.prototype.Visit$11.call(this, variableExpression);
                 }
             }
         }
@@ -1467,10 +1621,10 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         alias: [
             "Visit$1", "Parser$IExpressionVisitor$Visit$1",
-            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
             "Visit", "Parser$IExpressionVisitor$Visit",
-            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
             "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$11", "Parser$IExpressionVisitor$Visit$11",
             "Visit$5", "Parser$IExpressionVisitor$Visit$5"
         ],
         ctors: {
@@ -1484,16 +1638,16 @@ Bridge.assembly("Parser", function ($asm, globals) {
             Visit$1: function (functionExpression) {
                 this.consume("Function Call", ((System.Linq.Enumerable.from(functionExpression.Arguments).count() + 1) | 0));
             },
-            Visit$6: function (ternaryExpression) {
+            Visit$8: function (ternaryExpression) {
                 this.consume("Ternary", 3);
             },
             Visit: function (binaryExpression) {
                 this.consume(System.Enum.toString(Parser.BinaryExpressionType, binaryExpression.BinaryExpressionType), 2);
             },
-            Visit$7: function (valueExpression) {
+            Visit$9: function (valueExpression) {
                 this.consume(valueExpression.Value.toString(), 0);
             },
-            Visit$9: function (variableExpression) {
+            Visit$11: function (variableExpression) {
                 this.consume(Parser.Identifier.op_Implicit$1(variableExpression.Identifier), 0);
             },
             Visit$5: function (prefixExpression) {
@@ -1539,13 +1693,13 @@ Bridge.assembly("Parser", function ($asm, globals) {
         },
         alias: [
             "Visit", "Parser$IExpressionVisitor$Visit",
-            "Visit$7", "Parser$IExpressionVisitor$Visit$7",
-            "Visit$6", "Parser$IExpressionVisitor$Visit$6",
             "Visit$9", "Parser$IExpressionVisitor$Visit$9",
+            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$11", "Parser$IExpressionVisitor$Visit$11",
             "Visit$5", "Parser$IExpressionVisitor$Visit$5",
             "Visit$4", "Parser$IExpressionVisitor$Visit$4",
             "Visit$1", "Parser$IExpressionVisitor$Visit$1",
-            "Visit$8", "Parser$IExpressionVisitor$Visit$8",
+            "Visit$10", "Parser$IExpressionVisitor$Visit$10",
             "Visit$2", "Parser$IExpressionVisitor$Visit$2"
         ],
         ctors: {
@@ -1611,17 +1765,17 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 var output = System.String.format("({0}{1}{2})", left, infix, right);
                 this._stack.Push(output);
             },
-            Visit$7: function (valueExpression) {
+            Visit$9: function (valueExpression) {
                 this._stack.Push(valueExpression.Value.toString());
             },
-            Visit$6: function (ternaryExpression) {
+            Visit$8: function (ternaryExpression) {
                 var falseCase = this._stack.Pop();
                 var trueCase = this._stack.Pop();
                 var condition = this._stack.Pop();
 
                 this._stack.Push("{" + (condition || "") + " ? " + (trueCase || "") + " : " + (falseCase || "") + "}");
             },
-            Visit$9: function (variableExpression) {
+            Visit$11: function (variableExpression) {
                 this._stack.Push(Parser.Identifier.op_Implicit$1(variableExpression.Identifier));
             },
             Visit$5: function (prefixExpression) {
@@ -1660,7 +1814,7 @@ Bridge.assembly("Parser", function ($asm, globals) {
                 var functionName = this._stack.Pop();
                 this._stack.Push((functionName || "") + "(" + (args || "") + ")");
             },
-            Visit$8: function (variableAssignmentExpression) {
+            Visit$10: function (variableAssignmentExpression) {
                 this._stack.Push(System.String.concat("(", Parser.Identifier.op_Implicit$1(variableAssignmentExpression.Identifier)) + " = " + (this._stack.Pop() || "") + ")");
             },
             Visit$2: function (functionAssignmentExpression) {

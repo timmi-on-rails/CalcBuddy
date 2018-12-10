@@ -23,7 +23,6 @@
         if ('serviceWorker' in navigator) {
           // Use the window load event to keep the page load performant
           window.addEventListener('load', () => {
-              
               navigator.serviceWorker.register('service-worker.js')
               .then(function (registration) {
                   console.log('Service Worker Registered');
@@ -31,9 +30,6 @@
 
               navigator.serviceWorker.ready.then(function (registration) {
                   console.log('Service Worker Ready');
-                  navigator.registerProtocolHandler("web+calcbuddy",
-                    "https://timmi-on-rails.github.io/CalcBuddy/?q=%s",
-                    "CalcBuddy handler");
               });
           });
         }
