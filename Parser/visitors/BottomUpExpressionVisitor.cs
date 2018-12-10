@@ -43,5 +43,13 @@
 		public virtual void Visit(BinaryExpression binaryExpression)
 		{
 		}
+
+		public void Visit(StatementExpression statementExpression)
+		{
+		}
+
+		public void Visit(StatementsExpression statementsExpression)
+		{
+		}
 	}
 }

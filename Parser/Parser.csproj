@@ -40,6 +40,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="expressions\StatementExpression.cs" />
+    <Compile Include="expressions\StatementsExpression.cs" />
+    <Compile Include="parser\Notebook.cs" />
     <Compile Include="parser\ParserSpecification.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="expressions\BinaryExpression.cs" />

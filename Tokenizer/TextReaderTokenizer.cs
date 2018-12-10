@@ -11,6 +11,7 @@ namespace Tokenizer
 		readonly StringBuilder tokenContentBuilder = new StringBuilder();
 		readonly TextReader textReader;
 		int index;
+		int line;
 		int peek;
 
 		public TextReaderTokenizer(TextReader textReader)
@@ -32,7 +33,7 @@ namespace Tokenizer
 			string content = tokenContentBuilder.ToString();
 			tokenContentBuilder.Clear();
 			int startPosition = index - content.Length;
-			return new Token(tokenType, content, startPosition, errorCode);
+			return new Token(tokenType, content, line, startPosition, errorCode);
 		}
 
 		bool PeekIsPunctuation()
@@ -74,7 +75,12 @@ namespace Tokenizer
 
 		bool PeekIsWordSeparator()
 		{
-			return PeekIsWhiteSpace() || PeekIsPunctuation() || PeekIsEOF();
+			return PeekIsWhiteSpace() || PeekIsPunctuation() || PeekIsEOF() || PeekIsNewline();
+		}
+
+		private bool PeekIsNewline()
+		{
+			return peek == '\n';
 		}
 
 		public IEnumerable<Token> Scan()
@@ -83,7 +89,13 @@ namespace Tokenizer
 
 			while (peek != -1)
 			{
-				if (PeekIsLetter() || peek == '_')
+				if (PeekIsNewline())
+				{
+					Consume();
+					yield return CreateToken(TokenType.Newline);
+					line++;
+				}
+				else if (PeekIsLetter() || peek == '_')
 				{
 					yield return ScanIdentifier();
 				}

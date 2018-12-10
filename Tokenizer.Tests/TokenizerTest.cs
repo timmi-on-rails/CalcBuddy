@@ -100,7 +100,7 @@ namespace Tokenizer.Tests
 
 		Token Token(TokenType tokenType, string value, int position, ErrorCode errorCode = ErrorCode.Ok)
 		{
-			return new Token(tokenType, value, position, errorCode);
+			return new Token(tokenType, value, 0, position, errorCode);
 		}
 
 		void AssertTokensMatch(string expression, params Token[] expectedTokens)
@@ -119,6 +119,7 @@ namespace Tokenizer.Tests
 
 				bool tokensMatch = actualToken.TokenType == expectedToken.TokenType
 								   && String.Equals(actualToken.Content, expectedToken.Content, StringComparison.Ordinal)
+								   && actualToken.Line == expectedToken.Line
 								   && actualToken.Position == expectedToken.Position
 								   && actualToken.ErrorCode == expectedToken.ErrorCode;
 

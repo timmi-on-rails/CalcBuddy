@@ -290,5 +290,15 @@ namespace Parser
 			Value value = AssignVisitor.GetFunction(functionAssignmentExpression, _symbolManager);
 			_evaluationStack.Push(value);
 		}
+
+		public void Visit(StatementExpression statementExpression)
+		{
+			statementExpression.Expression.Accept(this);
+		}
+
+		public void Visit(StatementsExpression statementsExpression)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

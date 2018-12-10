@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Tokenizer;
 
 namespace Parser
@@ -34,6 +35,42 @@ namespace Parser
 			}
 
 			return leftExpression;
+		}
+
+		StatementExpression ParseStatement(TokenStream tokenStream)
+		{
+			IExpression expression = Parse(tokenStream);
+			int line = tokenStream.Peek().Line;
+
+			if (tokenStream.Match(TokenType.Semicolon))
+			{
+				return new StatementExpression(expression, loud: false, line: line);
+			}
+
+			if (tokenStream.Match(TokenType.Newline) || tokenStream.Peek().TokenType == TokenType.EndOfFile)
+			{
+				return new StatementExpression(expression, loud: true, line: line);
+			}
+
+			throw new ParserException("Expected Newline or semicolon.");
+		}
+
+		public StatementsExpression ParseStatements(TokenStream tokenStream)
+		{
+			List<StatementExpression> statements = new List<StatementExpression>();
+
+			while (tokenStream.Peek().TokenType != TokenType.EndOfFile)
+			{
+				while (tokenStream.Peek().TokenType == TokenType.Newline)
+				{
+					tokenStream.Consume();
+				}
+
+				StatementExpression statement = ParseStatement(tokenStream);
+				statements.Add(statement);
+			}
+
+			return new StatementsExpression(statements);
 		}
 	}
 }

@@ -37,6 +37,7 @@
 		AndDouble,
 		AndSingle,
 		PipeSingle,
-		PipeDouble
+		PipeDouble,
+		Newline
 	}
 }

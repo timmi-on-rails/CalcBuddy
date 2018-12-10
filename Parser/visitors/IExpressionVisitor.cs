@@ -25,6 +25,10 @@ namespace Parser
 		void Visit(TernaryExpression ternaryExpression);
 
 		void Visit(FunctionAssignmentExpression functionAssignmentExpression);
+
+		void Visit(StatementExpression statementExpression);
+
+		void Visit(StatementsExpression statementsExpression);
 	}
 
 	static class ExpressionVisitorExtensions
